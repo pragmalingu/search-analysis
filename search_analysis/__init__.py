@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.0.3'
+__version__ = '0.0.5'
 
 from collections import OrderedDict, defaultdict
 import pandas as pd
@@ -420,9 +420,12 @@ class EvaluationObject:
                     }
                 }
             }
-        explanation = self.elasticsearch.explain(self.index, doc_id, query_body)['explanation']
         explain = defaultdict(lambda: defaultdict(lambda: []))
+        explanation = self.elasticsearch.explain(self.index, doc_id, query_body)['explanation']
         explain["score"] = explanation['value']
+        if len(fields) < 2:
+            explanation = {'details': [explanation]}
+
         for el in explanation['details']:
             field = ''.join(f for f in fields if re.search(f, el['details'][0]['description']))
             explain[field]["total_value"] = el['details'][0]['value']
@@ -451,9 +454,9 @@ class EvaluationObject:
 
 
 class ComparisonTool:
-    def __init__(self, host, index_1, index_2, eval_obj_1=None, eval_obj_2=None, name_1='approach_1',
-                 name_2='approach_2', qry_rel_dict=dict(),
-                 fields=['text', 'title'], size=20, k=20):
+    def __init__(self, host, qry_rel_dict, eval_obj_1=None, eval_obj_2=None,
+                 fields=['text', 'title'], index_1=None, index_2=None, name_1='approach_1',
+                 name_2='approach_2', size=20, k=20):
         if eval_obj_1 is None:
             eval_obj_1 = EvaluationObject(host, qry_rel_dict, index_1, name_1)
         if eval_obj_2 is None:
