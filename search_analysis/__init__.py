@@ -294,7 +294,10 @@ class EvaluationObject:
         :param fn: int, false negatives
         :return: Recall value
         """
-        return tp / (tp + fn)
+        if tp + fn != 0:
+            return tp / (tp + fn)
+        else:
+            return 0
 
     def calculate_precision(self, tp, fp):
         """
@@ -303,7 +306,10 @@ class EvaluationObject:
         :param fn: int, false negatives
         :return: Precision value
         """
-        return tp / (tp + fp)
+        if tp + fp != 0:
+            return tp / (tp + fp)
+        else:
+            return 0
 
     def calculate_fscore(self, precision, recall, factor=1):
         """
