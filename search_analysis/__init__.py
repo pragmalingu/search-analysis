@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.0.5'
+__version__ = '0.0.8'
 
 from collections import OrderedDict, defaultdict
 import pandas as pd
@@ -294,6 +294,10 @@ class EvaluationObject:
         :param fn: int, false negatives
         :return: Recall value
         """
+        if (tp + fn) == 0:
+            raise ValueError('Sum of true positives and false negatives is 0. Please check your data, '
+                             'this shouldn\'t happen. Maybe you tried searching on the wrong index, with the wrong '
+                             'queries or on the wrong fields.')
         return tp / (tp + fn)
 
     def calculate_precision(self, tp, fp):
@@ -303,6 +307,10 @@ class EvaluationObject:
         :param fn: int, false negatives
         :return: Precision value
         """
+        if (tp + fp) == 0:
+            raise ValueError('Sum of true positives and false positives is 0. Please check your data, '
+                             'this shouldn\'t happen. Maybe you tried searching on the wrong index, with the wrong '
+                             'queries or on the wrong fields.')
         return tp / (tp + fp)
 
     def calculate_fscore(self, precision, recall, factor=1):
@@ -440,7 +448,7 @@ class EvaluationObject:
                     except IndexError:
                         continue
                     try:
-                        if re.match(r'[Ff]req', val["details"][0]["description"]):
+                        if re.match(r'.*[Ff]req', val["details"][0]["description"]):
                             term_freq = val["details"][0]["value"]
                     except IndexError:
                         continue
@@ -493,10 +501,11 @@ class ComparisonTool:
         else:
             setattr(self, diff_name, diff_ordered)
 
-    def get_disjoint_sets(self, distribution):
+    def get_disjoint_sets(self, distribution, highest=False):
         """
         Returns the disjoint sets of the given distribution
         :param distribution: str, possible arguments are 'false_positives' and 'false_negatives'
+        :param highest: if True it returns the set with the highest count of disjoints
         :return: a dict with disjoint lists for each approach in a dictionary for each query regarding the distribution
         """
         results = defaultdict(dict)
@@ -518,8 +527,13 @@ class ComparisonTool:
                            getattr(self.eval_obj_1, distribution)[query][distribution]):
                     results[query][distribution + ' ' + self.eval_obj_2.name].append(res_2)
             results[query]['count'] = len(results[query][distribution + ' ' + self.eval_obj_1.name])+len(results[query][distribution + ' ' + self.eval_obj_2.name])
-        ordered_results = OrderedDict(sorted(results.items(), key=lambda i: i[1]['count']))
-        return ordered_results
+        filtered_results = {key: val for key, val in results.items() if val['count'] != 0}
+        ordered_results = OrderedDict(sorted(filtered_results.items(), key=lambda i: i[1]['count']))
+        if not highest:
+            return ordered_results
+        else:
+            elements = list(ordered_results.items())
+            return elements[-1]
 
     def print_vis(self, params=None):
         """
