@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.0.9'
+__version__ = '0.1.0'
 
 from collections import OrderedDict, defaultdict
 import pandas as pd
@@ -70,6 +70,28 @@ class EvaluationObject:
         result = self.elasticsearch.search(index=self.index, body=body)
         return result
 
+    def __get_highlights_search_body(self, query, size=20, fields=["text", "title"]):
+        """
+        :param query: str, query to search on
+        :param size: int, searched size
+        :param fields: list of str, fields, that should be searched
+        :return: highlighting for the matched results
+        """
+        return {
+            "size": size,
+            "query": {
+                "multi_match": {
+                    "query": query,
+                    "fields": fields
+                }
+            },
+            "highlight": {
+                "fields": {
+                    "*": {}
+                }
+            }
+        }
+
     def create_hit(self, pos, hit, fields):
         """
         Creates an overview of the hit from Elasticsearch
@@ -80,10 +102,13 @@ class EvaluationObject:
         doc_fields = {}
         highlights = {}
         for curr_field in fields:
-            doc_fields[curr_field] = hit["_source"][curr_field]
-            if curr_field in hit["highlight"].keys():
-                highlights[curr_field] = hit["highlight"][curr_field]
-                # else None
+            try:
+                doc_fields[curr_field] = hit["_source"][curr_field]
+                if curr_field in hit["highlight"].keys():
+                    highlights[curr_field] = hit["highlight"][curr_field]
+            except KeyError:
+                continue
+
         variable = {
             "position": pos,
             "score": hit["_score"],
@@ -264,28 +289,6 @@ class EvaluationObject:
             return json.dumps(sorted_counts, indent=4)
         else:
             return sorted_counts
-
-    def __get_highlights_search_body(self, query, size=20, fields=["text", "title"]):
-        """
-        :param query: str, query to search on
-        :param size: int, searched size
-        :param fields: list of str, fields, that should be searched
-        :return: highlighting for the matched results
-        """
-        return {
-            "size": size,
-            "query": {
-                "multi_match": {
-                    "query": query,
-                    "fields": fields
-                }
-            },
-            "highlight": {
-                "fields": {
-                    "*": {}
-                }
-            }
-        }
 
     def calculate_recall(self, tp, fn):
         """
