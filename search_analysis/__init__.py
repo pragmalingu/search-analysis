@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.0.8'
+__version__ = '0.0.9'
 
 from collections import OrderedDict, defaultdict
 import pandas as pd
@@ -46,8 +46,8 @@ class EvaluationObject:
 
     def check_searched_queries(self, query_ids):
         """
-        Checks if query ids an int or None and transforms it to a list.
-        If it's None, all queries are searched.
+        Checks if query_ids is an int or None and transforms it to a list.
+        If it's None, all available queries are used for the search.
         :param query_ids: can be a list, an int or None
         :return: transformed query ids
         """
@@ -116,7 +116,7 @@ class EvaluationObject:
                 "true_positives": []
             }
             result = self.get_search_result(query_ID, size, fields)
-            for pos, hit in enumerate(result["hits"]["hits"]):
+            for pos, hit in enumerate(result["hits"]["hits"], start=1):
                 # check if `hit` IS a relevant document; in case `hits` position < k, it counts as a true positive;
                 if int(hit["_id"]) in self.queries_rels[query_ID]['relevance_assessments'] and pos <= k:
                     true = self.create_hit(pos, hit, fields)
@@ -147,7 +147,7 @@ class EvaluationObject:
             }
             result = self.get_search_result(query_ID, size, fields)
             # for every `hit` in the search results... ;
-            for pos, hit in enumerate(result["hits"]["hits"]):
+            for pos, hit in enumerate(result["hits"]["hits"], start=1):
                 # check if `hit` IS a relevant document; in case `hits` position < k, it counts as a true positive;
                 if int(hit["_id"]) not in self.queries_rels[query_ID]['relevance_assessments'] and pos < k:
                     false = self.create_hit(pos, hit, fields)
@@ -179,7 +179,7 @@ class EvaluationObject:
             result = self.get_search_result(query_ID, size, fields)
             # iterating through the results;
             query_rel = self.queries_rels[query_ID]['relevance_assessments'].copy()
-            for pos, hit in enumerate(result["hits"]["hits"]):
+            for pos, hit in enumerate(result["hits"]["hits"], start=1):
                 # false negatives require that the result belongs to the relevance assessments;
                 if int(hit["_id"]) in query_rel:
                     if pos > k:
