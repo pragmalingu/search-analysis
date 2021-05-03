@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 from collections import OrderedDict, defaultdict
 import pandas as pd
@@ -262,23 +262,29 @@ class EvaluationObject:
             count_rels = int(len(self.queries_rels[query_id]['relevance_assessments']))
             if distribution == 'false_positives':
                 f = k - count_query
-                if f == count_rels:
+                if f == count_rels or count_rels == 0:
                     percentage = 0
                 else:
                     percentage = (count_rels - f) * 100 / count_rels
             else:
-                percentage = (100 * count_query / count_rels)
+                if count_rels == 0:
+                    percentage = 0
+                else:
+                    percentage = (100 * count_query / count_rels)
             counts[query] = {'count': count_query, 'percentage': percentage, 'relevant documents': count_rels}
             sum_rels += count_rels
             sum_count += count_query
         if distribution == 'false_positives':
             f = (k * len(counts)) - sum_count
-            if f == sum_rels:
+            if f == sum_rels or sum_rels == 0:
                 sum_percentage = 0
             else:
                 sum_percentage = (sum_rels - f) * 100 / sum_rels
         else:
-            sum_percentage = (100 * sum_count / sum_rels)
+            if sum_rels == 0:
+                sum_percentage = 0
+            else:
+                sum_percentage = (100 * sum_count / sum_rels)
         sorted_counts = OrderedDict(sorted(counts.items(), key=lambda i: i[1]['percentage']))
         sorted_counts['total'] = {'total sum': sum_count, 'percentage': str(sum_percentage) + '%'}
         if dumps:
@@ -294,9 +300,10 @@ class EvaluationObject:
         :return: Recall value
         """
         if (tp + fn) == 0:
-            raise ValueError('Sum of true positives and false negatives is 0. Please check your data, '
+            warnings.warn('Sum of true positives and false negatives is 0. Please check your data, '
                              'this shouldn\'t happen. Maybe you tried searching on the wrong index, with the wrong '
                              'queries or on the wrong fields.')
+            return 0
         return tp / (tp + fn)
 
     def calculate_precision(self, tp, fp):
@@ -307,9 +314,10 @@ class EvaluationObject:
         :return: Precision value
         """
         if (tp + fp) == 0:
-            raise ValueError('Sum of true positives and false positives is 0. Please check your data, '
-                             'this shouldn\'t happen. Maybe you tried searching on the wrong index, with the wrong '
-                             'queries or on the wrong fields.')
+            warnings.warn('Sum of true positives and false positives is 0. Please check your data, '
+                          'this shouldn\'t happen. Maybe you tried searching on the wrong index, with the wrong '
+                          'queries or on the wrong fields.')
+            return 0
         return tp / (tp + fp)
 
     def calculate_fscore(self, precision, recall, factor=1):
@@ -326,6 +334,7 @@ class EvaluationObject:
             else:
                 return (1 + factor ** 2) * ((precision * recall) / (factor ** 2 * precision + recall))
         else:
+            warnings.warn('The value of precision and/or recall is 0.')
             return 0
 
     def get_recall(self, searched_queries=None, fields=['text', 'title'], size=20, k=20, dumps=False):
