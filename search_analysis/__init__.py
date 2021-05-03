@@ -266,23 +266,29 @@ class EvaluationObject:
             count_rels = int(len(self.queries_rels[query_id]['relevance_assessments']))
             if distribution == 'false_positives':
                 f = k - count_query
-                if f == count_rels:
+                if f == count_rels or count_rels == 0:
                     percentage = 0
                 else:
                     percentage = (count_rels - f) * 100 / count_rels
             else:
-                percentage = (100 * count_query / count_rels)
+                if count_rels == 0:
+                    percentage = 0
+                else:
+                    percentage = (100 * count_query / count_rels)
             counts[query] = {'count': count_query, 'percentage': percentage, 'relevant documents': count_rels}
             sum_rels += count_rels
             sum_count += count_query
         if distribution == 'false_positives':
             f = (k * len(counts)) - sum_count
-            if f == sum_rels:
+            if f == sum_rels or sum_rels == 0:
                 sum_percentage = 0
             else:
                 sum_percentage = (sum_rels - f) * 100 / sum_rels
         else:
-            sum_percentage = (100 * sum_count / sum_rels)
+            if sum_rels == 0:
+                sum_percentage = 0
+            else:
+                sum_percentage = (100 * sum_count / sum_rels)
         sorted_counts = OrderedDict(sorted(counts.items(), key=lambda i: i[1]['percentage']))
         sorted_counts['total'] = {'total sum': sum_count, 'percentage': str(sum_percentage) + '%'}
         if dumps:
