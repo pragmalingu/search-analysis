@@ -16,11 +16,11 @@ Search Analysis
 
 
 
-The search analysis library contains multiple tools to help you analyze your search enginge approach.
+The search analysis library contains multiple tools to help you analyze your search engine approach.
 
 
 * Free software: MIT license
-* Documentation: https://search-analysis.readthedocs.io.
+* Documentation: Coming soon
 
 
 Features
@@ -46,7 +46,7 @@ Features
 Help
 ------------
 
-For questions you can contact us via E-Mail or through our website (https://pragmalingu.de/).
+For questions you can contact us via E-Mail or through our website (https://www.pragmalingu.de/).
 
 Credits
 -------

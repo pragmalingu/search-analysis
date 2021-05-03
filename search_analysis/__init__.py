@@ -2,18 +2,12 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.1.0'
+__version__ = '0.1.2'
 
 from collections import OrderedDict, defaultdict
 import pandas as pd
 import seaborn as sns
-from elasticsearch import Elasticsearch
-import json
-
-
-from collections import OrderedDict, defaultdict
-import pandas as pd
-import seaborn as sns
+import matplotlib.pyplot as plt
 from elasticsearch import Elasticsearch
 import json
 import re
@@ -31,6 +25,8 @@ class EvaluationObject:
         self.recall = {}
         self.precision = {}
         self.fscore = {}
+        # orange, green, turquoise, black, red, yellow, white
+        self.pragma_colors = ['#ffb900', '#8cab13', '#22ab82', '#242526', '#cc0000', '#ffcc00', '#ffffff']
 
     def check_size(self, k, size):
         """
@@ -479,6 +475,8 @@ class ComparisonTool:
         self.recall_diffs = {}
         self.precision_diffs = {}
         self.fscore_diffs = {}
+        # orange, green, turquoise, black, red, yellow, white
+        self.pragma_colors = ['#ffb900', '#8cab13', '#22ab82', '#242526', '#cc0000', '#ffcc00', '#ffffff']
 
     def calculate_difference(self, condition='fscore', dumps=False):
         """
@@ -538,45 +536,85 @@ class ComparisonTool:
             elements = list(ordered_results.items())
             return elements[-1]
 
-    def print_vis(self, params=None):
+    def get_conditions(self, queries, eval_objs, conditions):
         """
-        Prints visualization of given parameters.
-        If nothing is given, it prints Precision, Recall and F-Score.
-        For now no other parameters are implemented.
+        Gets condition values for the vizualisation as a pandas data frame.
+        :param queries: int or list of ints of query ids
+        :param eval_objs: list of EvaluationObj
+        :param conditions: list of conditions that should be printed
+        :return: pandas data frame
         """
-        if params is None:
-            params = ['precision', 'recall', 'fscore']
-        sns.set_theme(style="whitegrid")
-        d = {
-            'Scores': [
-                params[0],
-                params[0],
-                params[1],
-                params[1],
-                params[2],
-                params[2]],
-            'Value': [
-                getattr(self.eval_obj_1, params[0])['total'],
-                getattr(self.eval_obj_2, params[0])['total'],
-                getattr(self.eval_obj_1, params[1])['total'],
-                getattr(self.eval_obj_2, params[1])['total'],
-                getattr(self.eval_obj_1, params[2])['total'],
-                getattr(self.eval_obj_2, params[2])['total']
-            ],
-            'Approach': [
-                self.eval_obj_1.name,
-                self.eval_obj_2.name,
-                self.eval_obj_1.name,
-                self.eval_obj_2.name,
-                self.eval_obj_1.name,
-                self.eval_obj_2.name
-            ]
-        }
-        vis_dict = pd.DataFrame(data=d)
+        vis_dict = defaultdict(list)
+        for obj in eval_objs:
+            for con in conditions:
+                for query in queries:
+                    vis_dict['Approach'].append(obj.name)
+                    vis_dict['Value'].append(getattr(obj, con)['Query_'+str(query)][con])
+                    vis_dict['Scores'].append(con)
+        return pd.DataFrame(data=vis_dict)
+
+    def get_distributions(self, queries, eval_objs, distributions):
+        """
+        Gets distributions values for the vizualisation as a pandas data frame.
+        :param queries: int or list of ints of query ids
+        :param eval_objs: list of EvaluationObj
+        :param distributions: list of distributions that should be printed
+        :return: pandas data frame
+        """
+        dis_dict = defaultdict(list)
+        for obj in eval_objs:
+            for dist in distributions:
+                for query in queries:
+                    for el in getattr(obj, dist)['Query_'+str(query)][dist]:
+                        dis_dict['Approach'].append(obj.name)
+                        dis_dict['Distributions'].append(dist)
+        return pd.DataFrame(data=dis_dict)
+
+    def visualize_distributions(self, queries=None, eval_objs=None, distributions=['true_positives', 'false_positives', 'false_negatives']):
+        """
+        Visualizes distributions in comparison for given queries and given approaches.
+        :param queries: int or list of ints of query ids or None; if None it searches with all queries
+        :param eval_objs: list of EvaluationObj; if None it uses the ones from the ComparisonTool
+        :param distributions: list of distributions that should be printed; by default tp, fp and fn are used
+        """
+        if not eval_objs:
+            eval_objs = [self.eval_obj_1, self.eval_obj_2]
+        if not queries:
+            queries = eval_objs[0].check_searched_queries(queries)
+        panda_dist = self.get_distributions(queries, eval_objs, distributions)
+        dist_colors = [self.pragma_colors[1], self.pragma_colors[4], self.pragma_colors[5]]
+        custom_palette = sns.set_palette(sns.color_palette(dist_colors))
+        sns.set_theme(context='paper', style='whitegrid', palette=custom_palette)
+        plt.figure(figsize=(12, 8))
+        ax = sns.countplot(x="approach", hue="distributions", data=panda_dist, palette=custom_palette)
+        ax.set_title("true positives, false positives and false negatives")
+        ax.set_xlabel("approaches")
+        ax.set_ylabel("ditributions")
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        plt.show()
+
+    def visualize_condition(self, queries=None, eval_objs=None, conditions=['precision', 'recall', 'fscore']):
+        """
+        Visualizes distributions in comparison for given queries and given approaches.
+        :param queries: int or list of ints of query ids or None; if None it searches with all queries
+        :param eval_objs: list of EvaluationObj; if None it uses the ones from the ComparisonTool
+        :param conditions: list of conditions that should be printed; by default precision, recall and f1-score are used
+        """
+        if conditions is None:
+            conditions = ['precision', 'recall', 'fscore']
+        if not eval_objs:
+            eval_objs = [self.eval_obj_1, self.eval_obj_2]
+        if not queries:
+            queries = eval_objs[0].check_searched_queries(queries)
+        panda_cond = self.get_conditions(queries, eval_objs, conditions)
+        custom_palette = sns.set_palette(sns.color_palette(self.pragma_colors))
+        sns.set_theme(context='paper', style='whitegrid', palette=custom_palette)
         g = sns.catplot(
-            data=vis_dict, kind="bar",
+            data=panda_cond, kind="bar",
             x="Value", y='Scores', hue="Approach",
-            ci="sd", palette="dark", alpha=.6, height=8
+            ci=None, alpha=.6, height=8
         )
         g.despine(left=True)
         g.set_axis_labels('Approach comparison')
+        plt.show()
