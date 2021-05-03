@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.0.5'
+__version__ = '0.1.0'
 
 from collections import OrderedDict, defaultdict
 import pandas as pd
@@ -46,8 +46,8 @@ class EvaluationObject:
 
     def check_searched_queries(self, query_ids):
         """
-        Checks if query ids an int or None and transforms it to a list.
-        If it's None, all queries are searched.
+        Checks if query_ids is an int or None and transforms it to a list.
+        If it's None, all available queries are used for the search.
         :param query_ids: can be a list, an int or None
         :return: transformed query ids
         """
@@ -70,6 +70,28 @@ class EvaluationObject:
         result = self.elasticsearch.search(index=self.index, body=body)
         return result
 
+    def __get_highlights_search_body(self, query, size=20, fields=["text", "title"]):
+        """
+        :param query: str, query to search on
+        :param size: int, searched size
+        :param fields: list of str, fields, that should be searched
+        :return: highlighting for the matched results
+        """
+        return {
+            "size": size,
+            "query": {
+                "multi_match": {
+                    "query": query,
+                    "fields": fields
+                }
+            },
+            "highlight": {
+                "fields": {
+                    "*": {}
+                }
+            }
+        }
+
     def create_hit(self, pos, hit, fields):
         """
         Creates an overview of the hit from Elasticsearch
@@ -80,10 +102,13 @@ class EvaluationObject:
         doc_fields = {}
         highlights = {}
         for curr_field in fields:
-            doc_fields[curr_field] = hit["_source"][curr_field]
-            if curr_field in hit["highlight"].keys():
-                highlights[curr_field] = hit["highlight"][curr_field]
-                # else None
+            try:
+                doc_fields[curr_field] = hit["_source"][curr_field]
+                if curr_field in hit["highlight"].keys():
+                    highlights[curr_field] = hit["highlight"][curr_field]
+            except KeyError:
+                continue
+
         variable = {
             "position": pos,
             "score": hit["_score"],
@@ -116,7 +141,7 @@ class EvaluationObject:
                 "true_positives": []
             }
             result = self.get_search_result(query_ID, size, fields)
-            for pos, hit in enumerate(result["hits"]["hits"]):
+            for pos, hit in enumerate(result["hits"]["hits"], start=1):
                 # check if `hit` IS a relevant document; in case `hits` position < k, it counts as a true positive;
                 if int(hit["_id"]) in self.queries_rels[query_ID]['relevance_assessments'] and pos <= k:
                     true = self.create_hit(pos, hit, fields)
@@ -147,7 +172,7 @@ class EvaluationObject:
             }
             result = self.get_search_result(query_ID, size, fields)
             # for every `hit` in the search results... ;
-            for pos, hit in enumerate(result["hits"]["hits"]):
+            for pos, hit in enumerate(result["hits"]["hits"], start=1):
                 # check if `hit` IS a relevant document; in case `hits` position < k, it counts as a true positive;
                 if int(hit["_id"]) not in self.queries_rels[query_ID]['relevance_assessments'] and pos < k:
                     false = self.create_hit(pos, hit, fields)
@@ -179,7 +204,7 @@ class EvaluationObject:
             result = self.get_search_result(query_ID, size, fields)
             # iterating through the results;
             query_rel = self.queries_rels[query_ID]['relevance_assessments'].copy()
-            for pos, hit in enumerate(result["hits"]["hits"]):
+            for pos, hit in enumerate(result["hits"]["hits"], start=1):
                 # false negatives require that the result belongs to the relevance assessments;
                 if int(hit["_id"]) in query_rel:
                     if pos > k:
@@ -265,28 +290,6 @@ class EvaluationObject:
         else:
             return sorted_counts
 
-    def __get_highlights_search_body(self, query, size=20, fields=["text", "title"]):
-        """
-        :param query: str, query to search on
-        :param size: int, searched size
-        :param fields: list of str, fields, that should be searched
-        :return: highlighting for the matched results
-        """
-        return {
-            "size": size,
-            "query": {
-                "multi_match": {
-                    "query": query,
-                    "fields": fields
-                }
-            },
-            "highlight": {
-                "fields": {
-                    "*": {}
-                }
-            }
-        }
-
     def calculate_recall(self, tp, fn):
         """
         Calculates Recall
@@ -294,10 +297,11 @@ class EvaluationObject:
         :param fn: int, false negatives
         :return: Recall value
         """
-        if tp + fn != 0:
-            return tp / (tp + fn)
-        else:
-            return 0
+        if (tp + fn) == 0:
+            raise ValueError('Sum of true positives and false negatives is 0. Please check your data, '
+                             'this shouldn\'t happen. Maybe you tried searching on the wrong index, with the wrong '
+                             'queries or on the wrong fields.')
+        return tp / (tp + fn)
 
     def calculate_precision(self, tp, fp):
         """
@@ -306,10 +310,11 @@ class EvaluationObject:
         :param fn: int, false negatives
         :return: Precision value
         """
-        if tp + fp != 0:
-            return tp / (tp + fp)
-        else:
-            return 0
+        if (tp + fp) == 0:
+            raise ValueError('Sum of true positives and false positives is 0. Please check your data, '
+                             'this shouldn\'t happen. Maybe you tried searching on the wrong index, with the wrong '
+                             'queries or on the wrong fields.')
+        return tp / (tp + fp)
 
     def calculate_fscore(self, precision, recall, factor=1):
         """
@@ -446,7 +451,7 @@ class EvaluationObject:
                     except IndexError:
                         continue
                     try:
-                        if re.match(r'[Ff]req', val["details"][0]["description"]):
+                        if re.match(r'.*[Ff]req', val["details"][0]["description"]):
                             term_freq = val["details"][0]["value"]
                     except IndexError:
                         continue
@@ -499,10 +504,11 @@ class ComparisonTool:
         else:
             setattr(self, diff_name, diff_ordered)
 
-    def get_disjoint_sets(self, distribution):
+    def get_disjoint_sets(self, distribution, highest=False):
         """
         Returns the disjoint sets of the given distribution
         :param distribution: str, possible arguments are 'false_positives' and 'false_negatives'
+        :param highest: if True it returns the set with the highest count of disjoints
         :return: a dict with disjoint lists for each approach in a dictionary for each query regarding the distribution
         """
         results = defaultdict(dict)
@@ -524,8 +530,13 @@ class ComparisonTool:
                            getattr(self.eval_obj_1, distribution)[query][distribution]):
                     results[query][distribution + ' ' + self.eval_obj_2.name].append(res_2)
             results[query]['count'] = len(results[query][distribution + ' ' + self.eval_obj_1.name])+len(results[query][distribution + ' ' + self.eval_obj_2.name])
-        ordered_results = OrderedDict(sorted(results.items(), key=lambda i: i[1]['count']))
-        return ordered_results
+        filtered_results = {key: val for key, val in results.items() if val['count'] != 0}
+        ordered_results = OrderedDict(sorted(filtered_results.items(), key=lambda i: i[1]['count']))
+        if not highest:
+            return ordered_results
+        else:
+            elements = list(ordered_results.items())
+            return elements[-1]
 
     def print_vis(self, params=None):
         """
