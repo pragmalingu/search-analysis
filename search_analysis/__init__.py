@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.1.0'
+__version__ = '0.1.3'
 
 from collections import OrderedDict, defaultdict
 import pandas as pd
@@ -304,9 +304,10 @@ class EvaluationObject:
         :return: Recall value
         """
         if (tp + fn) == 0:
-            raise ValueError('Sum of true positives and false negatives is 0. Please check your data, '
+            warnings.warn('Sum of true positives and false negatives is 0. Please check your data, '
                              'this shouldn\'t happen. Maybe you tried searching on the wrong index, with the wrong '
                              'queries or on the wrong fields.')
+            return 0
         return tp / (tp + fn)
 
     def calculate_precision(self, tp, fp):
@@ -317,9 +318,10 @@ class EvaluationObject:
         :return: Precision value
         """
         if (tp + fp) == 0:
-            raise ValueError('Sum of true positives and false positives is 0. Please check your data, '
-                             'this shouldn\'t happen. Maybe you tried searching on the wrong index, with the wrong '
-                             'queries or on the wrong fields.')
+            warnings.warn('Sum of true positives and false positives is 0. Please check your data, '
+                          'this shouldn\'t happen. Maybe you tried searching on the wrong index, with the wrong '
+                          'queries or on the wrong fields.')
+            return 0
         return tp / (tp + fp)
 
     def calculate_fscore(self, precision, recall, factor=1):
@@ -336,6 +338,7 @@ class EvaluationObject:
             else:
                 return (1 + factor ** 2) * ((precision * recall) / (factor ** 2 * precision + recall))
         else:
+            warnings.warn('The value of precision and/or recall is 0.')
             return 0
 
     def get_recall(self, searched_queries=None, fields=['text', 'title'], size=20, k=20, dumps=False):
