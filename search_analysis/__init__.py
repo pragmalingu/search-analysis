@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.1.5'
+__version__ = '0.1.6'
 
 import csv
 from collections import OrderedDict, defaultdict
@@ -31,8 +31,7 @@ class EvaluationObject:
         # orange, green, turquoise, black, red, yellow, white
         self.pragma_colors = ['#ffb900', '#8cab13', '#22ab82', '#242526', '#cc0000', '#ffcc00', '#ffffff']
 
-    # internal process methods
-    def __check_size(self, k, size):
+    def _check_size(self, k, size):
         """
         checking `size` argument; size needs to be >= k;
         :param k: ranking size
@@ -44,7 +43,7 @@ class EvaluationObject:
                 size = k
         return size
 
-    def __get_search_result(self, query_id, size, fields):
+    def _get_search_result(self, query_id, size, fields):
         """
         Sends a search request for every query to Elasticsearch and returns the result including highlighting
         :param query_id: int, current query id
@@ -52,11 +51,11 @@ class EvaluationObject:
         :param size: int, search size
         :return: returns search result from Elasticsearch
         """
-        body = self.__get_highlights_search_body(self.queries_rels[query_id]['question'], size, fields)
+        body = self._get_highlights_search_body(self.queries_rels[query_id]['question'], size, fields)
         result = self.elasticsearch.search(index=self.index, body=body)
         return result
 
-    def __get_highlights_search_body(self, query, size=20, fields=["text", "title"]):
+    def _get_highlights_search_body(self, query, size=20, fields=["text", "title"]):
         """
         :param query: str, query to search on
         :param size: int, searched size
@@ -78,7 +77,7 @@ class EvaluationObject:
             }
         }
 
-    def __check_searched_queries(self, query_ids):
+    def _check_searched_queries(self, query_ids):
         """
         Checks if query_ids is an int or None and transforms it to a list.
         If it's None, all available queries are used for the search.
@@ -92,7 +91,7 @@ class EvaluationObject:
             query_ids = [*self.queries_rels]
         return query_ids
 
-    def __create_hit(self, pos, hit, fields):
+    def _create_hit(self, pos, hit, fields):
         """
         Creates an overview of the hit from Elasticsearch
         :param pos: ranking position
@@ -121,7 +120,7 @@ class EvaluationObject:
             variable["doc"][field] = data
         return variable
 
-    def __initialize_distributions(self, searched_queries=None, fields=['text', 'title'], size=20, k=20):
+    def _initialize_distributions(self, searched_queries=None, fields=['text', 'title'], size=20, k=20):
         """
         Gets values for self.true_positives, self.false_positives and self.false_negatives
                 Calculates false positives from given search queries
@@ -130,13 +129,13 @@ class EvaluationObject:
         :param size: int, search size
         :param k: int, k top results that should be returned from Elasticsearch
         """
-        size = self.__check_size(k, size)
-        searched_queries = self.__check_searched_queries(searched_queries)
+        size = self._check_size(k, size)
+        searched_queries = self._check_searched_queries(searched_queries)
         self.true_positives = self.get_true_positives(searched_queries, fields, size, k, False)
         self.false_positives = self.get_false_positives(searched_queries, fields, size, k, False)
         self.false_negatives = self.get_false_negatives(searched_queries, fields, size, k, False)
 
-    def __calculate_recall(self, tp, fn):
+    def _calculate_recall(self, tp, fn):
         """
         Calculates Recall
         :param tp: int, true positives
@@ -150,7 +149,7 @@ class EvaluationObject:
             return 0
         return tp / (tp + fn)
 
-    def __calculate_precision(self, tp, fp):
+    def _calculate_precision(self, tp, fp):
         """
         Calculates Precision
         :param tp: int, true positives
@@ -164,7 +163,7 @@ class EvaluationObject:
             return 0
         return tp / (tp + fp)
 
-    def __calculate_fscore(self, precision, recall, factor=1):
+    def _calculate_fscore(self, precision, recall, factor=1):
         """
         Calculates F-score
         :param precision: int, precision value
@@ -181,7 +180,6 @@ class EvaluationObject:
             warnings.warn('The value of precision and/or recall is 0.')
             return 0
 
-    # callable methods
     def get_true_positives(self, searched_queries=None, fields=['text', 'title'], size=20, k=20, dumps=False):
         """
         Calculates true positives from given search queries
@@ -192,8 +190,8 @@ class EvaluationObject:
         :param dumps: True or False, if True it returns json.dumps, if False it returns json
         :return: true positives as json
         """
-        size = self.__check_size(k, size)
-        searched_queries = self.__check_searched_queries(searched_queries)
+        size = self._check_size(k, size)
+        searched_queries = self._check_searched_queries(searched_queries)
         # initializing dictionary of true positives;
         true_pos = {}
         for query_ID in searched_queries:
@@ -201,11 +199,11 @@ class EvaluationObject:
                 "question": self.queries_rels[query_ID]['question'],
                 "true_positives": []
             }
-            result = self.__get_search_result(query_ID, size, fields)
+            result = self._get_search_result(query_ID, size, fields)
             for pos, hit in enumerate(result["hits"]["hits"], start=1):
                 # check if `hit` IS a relevant document; in case `hits` position < k, it counts as a true positive;
                 if int(hit["_id"]) in self.queries_rels[query_ID]['relevance_assessments'] and pos <= k:
-                    true = self.__create_hit(pos, hit, fields)
+                    true = self._create_hit(pos, hit, fields)
                     true_pos["Query_" + str(query_ID)]["true_positives"].append(true)
         if dumps:
             return json.dumps(true_pos, indent=4)
@@ -222,8 +220,8 @@ class EvaluationObject:
         :param dumps: True or False, if True it returns json.dumps, if False it returns json
         :return: false positives as json
         """
-        size = self.__check_size(k, size)
-        searched_queries = self.__check_searched_queries(searched_queries)
+        size = self._check_size(k, size)
+        searched_queries = self._check_searched_queries(searched_queries)
         # initializing dictionary of false positives;
         false_pos = {}
         for query_ID in searched_queries:
@@ -231,12 +229,12 @@ class EvaluationObject:
                 "question": self.queries_rels[query_ID]['question'],
                 "false_positives": []
             }
-            result = self.__get_search_result(query_ID, size, fields)
+            result = self._get_search_result(query_ID, size, fields)
             # for every `hit` in the search results... ;
             for pos, hit in enumerate(result["hits"]["hits"], start=1):
                 # check if `hit` IS a relevant document; in case `hits` position < k, it counts as a true positive;
                 if int(hit["_id"]) not in self.queries_rels[query_ID]['relevance_assessments'] and pos < k:
-                    false = self.__create_hit(pos, hit, fields)
+                    false = self._create_hit(pos, hit, fields)
                     false_pos["Query_" + str(query_ID)]["false_positives"].append(false)
         if dumps:
             return json.dumps(false_pos, indent=4)
@@ -253,8 +251,8 @@ class EvaluationObject:
         :param dumps: True or False, if True it returns json.dumps, if False it returns json
         :return: false negatives as json
         """
-        size = self.__check_size(k, size)
-        searched_queries = self.__check_searched_queries(searched_queries)
+        size = self._check_size(k, size)
+        searched_queries = self._check_searched_queries(searched_queries)
         # initializing dictionary of false negatives;
         false_neg = {}
         for query_ID in searched_queries:
@@ -262,7 +260,7 @@ class EvaluationObject:
                 "question": self.queries_rels[query_ID]['question'],
                 "false_negatives": []
             }
-            result = self.__get_search_result(query_ID, size, fields)
+            result = self._get_search_result(query_ID, size, fields)
             # iterating through the results;
             query_rel = self.queries_rels[query_ID]['relevance_assessments'].copy()
             for pos, hit in enumerate(result["hits"]["hits"], start=1):
@@ -270,7 +268,7 @@ class EvaluationObject:
                 if int(hit["_id"]) in query_rel:
                     if pos > k:
                         # create a `false negative`;
-                        false = self.__create_hit(pos, hit, fields)
+                        false = self._create_hit(pos, hit, fields)
                         # save `false hit/positive`;
                         false_neg["Query_" + str(query_ID)]["false_negatives"].insert(0, false)
                         # removes the `hit` from the remaining relevant documents;
@@ -302,14 +300,14 @@ class EvaluationObject:
         :return: json with Recall values
         """
         if not self.true_positives:
-            self.__initialize_distributions(searched_queries, fields, size, k)
+            self._initialize_distributions(searched_queries, fields, size, k)
         true_pos = self.count_distribution('true_positives', self.true_positives, False, k)
         false_neg = self.count_distribution('false_negatives', self.false_negatives, False, k)
         recall = defaultdict(dict)
         recall_sum = 0.0
         for query, data in true_pos.items():
             if not query == 'total':
-                recall_value = self.__calculate_recall(true_pos[query]['count'], false_neg[query]['count'])
+                recall_value = self._calculate_recall(true_pos[query]['count'], false_neg[query]['count'])
                 recall[query]['recall'] = recall_value
                 recall_sum += recall_value
         recall = OrderedDict(sorted(recall.items(), key=lambda i: i[1]['recall']))
@@ -330,14 +328,14 @@ class EvaluationObject:
         :return: json with Precision values
         """
         if not self.true_positives:
-            self.__initialize_distributions(searched_queries, fields, size, k)
+            self._initialize_distributions(searched_queries, fields, size, k)
         true_pos = self.count_distribution('true_positives', self.true_positives, False, k)
         false_pos = self.count_distribution('false_positives', self.false_positives, False, k)
         precision = defaultdict(dict)
         precision_sum = 0.0
         for query, data in true_pos.items():
             if not query == 'total':
-                precision_value = self.__calculate_precision(true_pos[query]['count'], false_pos[query]['count'])
+                precision_value = self._calculate_precision(true_pos[query]['count'], false_pos[query]['count'])
                 precision[query]['precision'] = precision_value
                 precision_sum += precision_value
         precision = OrderedDict(sorted(precision.items(), key=lambda i: i[1]['precision']))
@@ -364,11 +362,11 @@ class EvaluationObject:
         fscore = defaultdict(dict)
         for query, data in self.precision.items():
             if not query == 'total':
-                fscore_value = self.__calculate_fscore(self.precision[query]['precision'], self.recall[query]['recall'],
+                fscore_value = self._calculate_fscore(self.precision[query]['precision'], self.recall[query]['recall'],
                                                        factor)
                 fscore[query]['fscore'] = fscore_value
         fscore = OrderedDict(sorted(fscore.items(), key=lambda i: i[1]['fscore']))
-        fscore['total'] = self.__calculate_fscore(self.precision['total'], self.recall['total'], factor)
+        fscore['total'] = self._calculate_fscore(self.precision['total'], self.recall['total'], factor)
         if dumps:
             return json.dumps(fscore, indent=4)
         else:
@@ -496,8 +494,7 @@ class ComparisonTool:
         self.precision_diffs = {}
         self.fscore_diffs = {}
 
-    # internal process methods
-    def __get_conditions(self, queries, eval_objs, conditions):
+    def _get_conditions(self, queries, eval_objs, conditions):
         """
         Gets condition values for the vizualisation as a pandas data frame.
         :param queries: int or list of ints of query ids
@@ -514,7 +511,7 @@ class ComparisonTool:
                     vis_dict['Scores'].append(con)
         return pd.DataFrame(data=vis_dict)
 
-    def __get_distributions(self, queries, eval_objs, distributions):
+    def _get_distributions(self, queries, eval_objs, distributions):
         """
         Gets distributions values for the vizualisation as a pandas data frame.
         :param queries: int or list of ints of query ids
@@ -531,7 +528,7 @@ class ComparisonTool:
                         dis_dict['Distributions'].append(dist)
         return pd.DataFrame(data=dis_dict)
 
-    def __get_explain_terms(self, query_id, doc_id, fields, eval_objs):
+    def _get_explain_terms(self, query_id, doc_id, fields, eval_objs):
         """
         Returns pandas data frame containing all the found terms and their scores.
         :param query_id: int, query id of query that should be explained
@@ -548,7 +545,7 @@ class ComparisonTool:
                 for function in explain[field]['details']:
                     explain_dict['Approach'].append(obj.name)
                     explain_dict['Field'].append(field)
-                    explain_dict['Terms'].append(self.__extract_terms(function["function"]["description"]))
+                    explain_dict['Terms'].append(self._extract_terms(function["function"]["description"]))
                     explain_dict['Term Score'].append(function["function"]["value"])
                     explain_dict['Term Frequency per Document'].append(
                         function["function"]["n, number of documents containing term"])
@@ -563,7 +560,7 @@ class ComparisonTool:
         #           explain_dict[eval_objs[0].name]['Group'] = group_counter
         return pd.DataFrame(data=explain_dict).sort_values(by=['Terms'])
 
-    def __get_csv_terms(self, query_id, doc_id, fields, eval_objs):
+    def _get_csv_terms(self, query_id, doc_id, fields, eval_objs):
         """
         Returns dict containing all the found terms and their scores.
         :param query_id: int, query id of query that should be explained
@@ -579,7 +576,7 @@ class ComparisonTool:
             explain = obj.explain_query(query_id, doc_id, fields, dumps=False)
             for field in fields:
                 for function in explain[field]['details']:
-                    explain_dict[obj.name].append(self.__extract_terms(function["function"]["description"]))
+                    explain_dict[obj.name].append(self._extract_terms(function["function"]["description"]))
                     explain_dict[obj.name+'2'].append(str(function["function"]["value"]).replace('.', ','))
         longest_term_list = len(explain_dict[eval_objs[0].name])
         for term_1 in explain_dict[eval_objs[0].name]:
@@ -598,7 +595,7 @@ class ComparisonTool:
                 explain_dict[eval_obj.name+'2'].extend(val_ext)
         return explain_dict
 
-    def __extract_terms(self, string):
+    def _extract_terms(self, string):
         """
         Extracts terms from explain_query method
         :param string:
@@ -609,7 +606,6 @@ class ComparisonTool:
         terms = ', '.join([term.replace(':', '').strip() for term in terms])
         return terms
 
-    # callable methods
     def calculate_difference(self, condition='fscore', dumps=False):
         """
         Calculates the difference per query for the given condition.
@@ -680,8 +676,8 @@ class ComparisonTool:
         if not eval_objs:
             eval_objs = [self.eval_obj_1, self.eval_obj_2]
         if not queries:
-            queries = eval_objs[0].__check_searched_queries(queries)
-        panda_dist = self.__get_distributions(queries, eval_objs, distributions)
+            queries = eval_objs[0]._check_searched_queries(queries)
+        panda_dist = self._get_distributions(queries, eval_objs, distributions)
         dist_colors = [self.pragma_colors[1], self.pragma_colors[4], self.pragma_colors[5]]
         custom_palette = sns.set_palette(sns.color_palette(dist_colors))
         sns.set_theme(context='paper', style='whitegrid', palette=custom_palette)
@@ -706,8 +702,8 @@ class ComparisonTool:
         if not eval_objs:
             eval_objs = [self.eval_obj_1, self.eval_obj_2]
         if not queries:
-            queries = eval_objs[0].__check_searched_queries(queries)
-        panda_cond = self.__get_conditions(queries, eval_objs, conditions)
+            queries = eval_objs[0]._check_searched_queries(queries)
+        panda_cond = self._get_conditions(queries, eval_objs, conditions)
         custom_palette = sns.set_palette(sns.color_palette(self.pragma_colors))
         sns.set_theme(context='paper', style='whitegrid', palette=custom_palette)
         g = sns.catplot(
@@ -729,7 +725,7 @@ class ComparisonTool:
         """
         if not eval_objs:
             eval_objs = [self.eval_obj_1, self.eval_obj_2]
-        panda_explain = self.__get_explain_terms(query_id, doc_id, fields, eval_objs)
+        panda_explain = self._get_explain_terms(query_id, doc_id, fields, eval_objs)
         custom_palette = sns.set_palette(sns.color_palette(self.pragma_colors))
         sns.set_context('paper', rc={'figure.figsize': (20, 14)})
         sns.set_theme(context='paper', style='whitegrid', palette=custom_palette)
@@ -749,9 +745,46 @@ class ComparisonTool:
         """
         if not eval_objs:
             eval_objs = [self.eval_obj_1, self.eval_obj_2]
-        panda_explain = self.__get_csv_terms(query_id, doc_id, fields, eval_objs)
+        panda_explain = self._get_csv_terms(query_id, doc_id, fields, eval_objs)
         keys = sorted(panda_explain.keys())
         with open(path_to_save_to, "w") as outfile:
             writer = csv.writer(outfile, delimiter=";")
             writer.writerow(keys)
             writer.writerows(zip(*[panda_explain[key] for key in keys]))
+
+
+    def get_specific_comparison(self, doc_id):
+        """
+        :param doc_id: int or list, doc id that should be looked at
+        :return: dict, filled with comparison for given doc id
+        """
+        if type(doc_id) == int:
+            doc_id = [doc_id]
+        comp_dict = defaultdict()
+        attr_list = ['true_positives', 'false_positives', 'false_negatives']
+        for i in doc_id:
+            comp_dict[i] = defaultdict()
+            for attr in attr_list:
+                for query, dist in getattr(self.eval_obj_1, attr).items():
+                    for hit in dist[attr]:
+                        try:
+                            hit['doc'][i]
+                            info = defaultdict
+                            info[i] = hit['doc']
+                            info[self.eval_obj_1.name + ' ' + attr] = [hit['highlight'], hit['position'], hit['score'],
+                                                                       query]
+                            comp_dict[i] = info
+                        except KeyError:
+                            pass
+                for query, dist in getattr(self.eval_obj_2, attr).items():
+                    for hit in dist[attr]:
+                        try:
+                            hit['doc'][i]
+                            info = defaultdict
+                            info[i] = hit['doc']
+                            info[self.eval_obj_2.name + ' ' + attr] = [hit['highlight'], hit['position'], hit['score'],
+                                                                       query]
+                            comp_dict[i] = info
+                        except KeyError:
+                            pass
+        return comp_dict
