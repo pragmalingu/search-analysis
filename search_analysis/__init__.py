@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.1.6'
+__version__ = '0.1.7'
 
 import csv
 from collections import OrderedDict, defaultdict
@@ -675,8 +675,7 @@ class ComparisonTool:
         """
         if not eval_objs:
             eval_objs = [self.eval_obj_1, self.eval_obj_2]
-        if not queries:
-            queries = eval_objs[0]._check_searched_queries(queries)
+        queries = eval_objs[0]._check_searched_queries(queries)
         panda_dist = self._get_distributions(queries, eval_objs, distributions)
         dist_colors = [self.pragma_colors[1], self.pragma_colors[4], self.pragma_colors[5]]
         custom_palette = sns.set_palette(sns.color_palette(dist_colors))
@@ -701,8 +700,7 @@ class ComparisonTool:
             conditions = ['precision', 'recall', 'fscore']
         if not eval_objs:
             eval_objs = [self.eval_obj_1, self.eval_obj_2]
-        if not queries:
-            queries = eval_objs[0]._check_searched_queries(queries)
+        queries = eval_objs[0]._check_searched_queries(queries)
         panda_cond = self._get_conditions(queries, eval_objs, conditions)
         custom_palette = sns.set_palette(sns.color_palette(self.pragma_colors))
         sns.set_theme(context='paper', style='whitegrid', palette=custom_palette)
