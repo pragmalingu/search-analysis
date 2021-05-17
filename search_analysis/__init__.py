@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.1.7'
+__version__ = '0.1.8'
 
 import csv
 from collections import OrderedDict, defaultdict
@@ -443,7 +443,11 @@ class EvaluationObject:
         explain = defaultdict(lambda: defaultdict(lambda: []))
         explanation = self.elasticsearch.explain(self.index, doc_id, query_body)['explanation']
         explain["score"] = explanation['value']
-        if len(fields) < 2:
+        if explain["score"] == 0.0:
+            print('No hits with that request, please check all the parameters like index, fields, query dictionary, '
+                  'etc.')
+            return explanation
+        if explanation['description'] is not "max of:":
             explanation = {'details': [explanation]}
 
         for el in explanation['details']:
