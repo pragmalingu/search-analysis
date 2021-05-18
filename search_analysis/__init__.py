@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.1.9'
+__version__ = '0.1.10'
 
 import csv
 from collections import OrderedDict, defaultdict
@@ -570,33 +570,30 @@ class ComparisonTool:
         :param query_id: int, query id of query that should be explained
         :param doc_id: int, id of document that should be explained
         :param fields: list of fields that should be searched, by default 'text' and 'title' are searched
-        :param eval_objs: list of EvaluationObj; if None it uses the ones from the ComparisonTool
+        :param eval_objs: list of two EvaluationObj
         :return: dict
         """
-        explain_dict = defaultdict()
+        term_dict = defaultdict(dict)
         for obj in eval_objs:
-            explain_dict[obj.name] = ['searched terms']
-            explain_dict[obj.name+'2'] = ['term score']
             explain = obj.explain_query(query_id, doc_id, fields, dumps=False)
             for field in fields:
                 for function in explain[field]['details']:
-                    explain_dict[obj.name].append(self._extract_terms(function["function"]["description"]))
-                    explain_dict[obj.name+'2'].append(str(function["function"]["value"]).replace('.', ','))
-        longest_term_list = len(explain_dict[eval_objs[0].name])
-        for term_1 in explain_dict[eval_objs[0].name]:
-            for eval_obj in eval_objs[1:]:
-                longest_term_list = len(explain_dict[eval_obj.name]) if longest_term_list < len(explain_dict[eval_obj.name]) else longest_term_list
-                for term_2 in explain_dict[eval_obj.name]:
-                    if (not term_1 == term_2) and (term_1 in term_2 or term_2 in term_1):
-                        new_term = term_1+'\n'+term_2
-                        explain_dict[eval_objs[0].name] = [t.replace(term_1, new_term) for t in explain_dict[eval_objs[0].name]]
-                        explain_dict[eval_obj.name] = [t.replace(term_1, new_term) for t in explain_dict[eval_obj.name]]
-        for eval_obj in eval_objs:
-            if longest_term_list > len(explain_dict[eval_obj.name]):
-                term_ext = ['']*(longest_term_list-len(explain_dict[eval_obj.name]))
-                val_ext = [0]*(longest_term_list-len(explain_dict[eval_obj.name]))
-                explain_dict[eval_obj.name].extend(term_ext)
-                explain_dict[eval_obj.name+'2'].extend(val_ext)
+                    term_dict[obj.name][(self._extract_terms(function["function"]["description"]))] = str(function["function"]["value"]).replace('.', ',')
+        extra_1 = set(term_dict[eval_objs[0].name])-set(term_dict[eval_objs[1].name])
+        for key in extra_1:
+            term_dict[eval_objs[1].name][key] = 0
+        extra_2 = set(term_dict[eval_objs[1].name])-set(term_dict[eval_objs[0].name])
+        for key in extra_2:
+            term_dict[eval_objs[0].name][key] = 0
+        explain_dict = defaultdict()
+        for obj in eval_objs:
+            ordered_terms = collections.OrderedDict(sorted(term_dict[obj.name].items()))
+            searched_terms = list(ordered_terms.keys())
+            term_scores = list(ordered_terms.values())
+            explain_dict[obj.name] = ['searched terms']
+            explain_dict[obj.name + '2'] = ['term score']
+            explain_dict[obj.name].extend(searched_terms)
+            explain_dict[obj.name + '2'].extend(term_scores)
         return explain_dict
 
     def _extract_terms(self, string):
@@ -753,40 +750,3 @@ class ComparisonTool:
             writer = csv.writer(outfile, delimiter=";")
             writer.writerow(keys)
             writer.writerows(zip(*[panda_explain[key] for key in keys]))
-
-
-    def get_specific_comparison(self, doc_id):
-        """
-        :param doc_id: int or list, doc id that should be looked at
-        :return: dict, filled with comparison for given doc id
-        """
-        if type(doc_id) == int:
-            doc_id = [doc_id]
-        comp_dict = defaultdict()
-        attr_list = ['true_positives', 'false_positives', 'false_negatives']
-        for i in doc_id:
-            comp_dict[i] = defaultdict()
-            for attr in attr_list:
-                for query, dist in getattr(self.eval_obj_1, attr).items():
-                    for hit in dist[attr]:
-                        try:
-                            hit['doc'][i]
-                            info = defaultdict
-                            info[i] = hit['doc']
-                            info[self.eval_obj_1.name + ' ' + attr] = [hit['highlight'], hit['position'], hit['score'],
-                                                                       query]
-                            comp_dict[i] = info
-                        except KeyError:
-                            pass
-                for query, dist in getattr(self.eval_obj_2, attr).items():
-                    for hit in dist[attr]:
-                        try:
-                            hit['doc'][i]
-                            info = defaultdict
-                            info[i] = hit['doc']
-                            info[self.eval_obj_2.name + ' ' + attr] = [hit['highlight'], hit['position'], hit['score'],
-                                                                       query]
-                            comp_dict[i] = info
-                        except KeyError:
-                            pass
-        return comp_dict
