@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.1.8'
+__version__ = '0.1.9'
 
 import csv
 from collections import OrderedDict, defaultdict
@@ -447,7 +447,7 @@ class EvaluationObject:
             print('No hits with that request, please check all the parameters like index, fields, query dictionary, '
                   'etc.')
             return explanation
-        if explanation['description'] is not "max of:":
+        if explanation['description'] != "max of:":
             explanation = {'details': [explanation]}
 
         for el in explanation['details']:
