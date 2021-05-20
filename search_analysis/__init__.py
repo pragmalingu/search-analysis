@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.1.10'
+__version__ = '0.1.11'
 
 import csv
 from collections import OrderedDict, defaultdict
@@ -667,12 +667,14 @@ class ComparisonTool:
             return elements[-1]
 
     def visualize_distributions(self, queries=None, eval_objs=None,
-                                distributions=['true_positives', 'false_positives', 'false_negatives']):
+                                distributions=['true_positives', 'false_positives', 'false_negatives'], download=False,  path_to_file='./save_vis_distributions.svg'):
         """
         Visualizes distributions in comparison for given queries and given approaches.
         :param queries: int or list of ints of query ids or None; if None it searches with all queries
         :param eval_objs: list of EvaluationObj; if None it uses the ones from the ComparisonTool
         :param distributions: list of distributions that should be printed; by default tp, fp and fn are used
+        :param download: True or False; by default False which leads to not saving the visualization as svg
+        :param path_to_file: string; path and filename the visualization should be saved to
         """
         if not eval_objs:
             eval_objs = [self.eval_obj_1, self.eval_obj_2]
@@ -688,14 +690,18 @@ class ComparisonTool:
         ax.set_ylabel("Distributions")
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
+        if download:
+            plt.savefig(path_to_file, format="svg")
         plt.show()
 
-    def visualize_condition(self, queries=None, eval_objs=None, conditions=['precision', 'recall', 'fscore']):
+    def visualize_condition(self, queries=None, eval_objs=None, conditions=['precision', 'recall', 'fscore'], download=False,  path_to_file='./save_vis_condition.svg'):
         """
         Visualizes distributions in comparison for given queries and given approaches.
         :param queries: int or list of ints of query ids or None; if None it searches with all queries
         :param eval_objs: list of EvaluationObj; if None it uses the ones from the ComparisonTool
         :param conditions: list of conditions that should be printed; by default precision, recall and f1-score are used
+        :param download: True or False; by default False which leads to not saving the visualization as svg
+        :param path_to_file: string; path and filename the visualization should be saved to
         """
         if conditions is None:
             conditions = ['precision', 'recall', 'fscore']
@@ -712,15 +718,19 @@ class ComparisonTool:
         )
         g.despine(left=True)
         g.set_axis_labels('Approach comparison')
+        if download:
+            plt.savefig(path_to_file, format="svg")
         plt.show()
 
-    def visualize_explanation(self, query_id, doc_id, fields=['text', 'title'], eval_objs=None):
+    def visualize_explanation(self, query_id, doc_id, fields=['text', 'title'], eval_objs=None, download=False,  path_to_file='./save_vis_explaination.svg'):
         """
         Visualize in comparison which words were better scored using approach, specific query and a specific document.
         :param query_id: int, query id of query that should be explained
         :param doc_id: int, id of document that should be explained
         :param fields: list of fields that should be searched, by default 'text' and 'title' are searched
         :param eval_objs: list of EvaluationObj; if None it uses the ones from the ComparisonTool
+        :param download: True or False; by default False which leads to not saving the visualization as svg
+        :param path_to_file: string; path and filename the visualization should be saved to
         """
         if not eval_objs:
             eval_objs = [self.eval_obj_1, self.eval_obj_2]
@@ -730,6 +740,8 @@ class ComparisonTool:
         sns.set_theme(context='paper', style='whitegrid', palette=custom_palette)
         g = sns.barplot(x='Term Score', y='Terms', data=panda_explain, hue="Approach")
         sns.despine(left=True, bottom=True)
+        if download:
+            plt.savefig(path_to_file, format="svg")
         plt.show()
 
     def visualize_explanation_csv(self, query_id, doc_id, path_to_save_to, fields=['text', 'title'], eval_objs=None):
@@ -739,7 +751,7 @@ class ComparisonTool:
         :param doc_id: int, id of document that should be explained
         :param path_to_save_to: path and filename the csv should be saved to
         :param fields: list of fields that should be searched, by default 'text' and 'title' are searched
-        :param eval_objs: list of EvaluationObj; if None it uses the ones from the ComparisonTool
+        :param eval_objs: list of exactly two EvaluationObj; if None it uses the ones from the ComparisonTool
         :return: csv file to feed it into Google Sheets
         """
         if not eval_objs:
