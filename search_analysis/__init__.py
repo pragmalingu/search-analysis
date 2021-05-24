@@ -2,15 +2,13 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.1.11'
+__version__ = '0.1.12'
 
 import csv
-from collections import OrderedDict, defaultdict
-import warnings
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from elasticsearch import Elasticsearch
+from collections import OrderedDict, defaultdict
 import json
 import re
 
@@ -33,10 +31,21 @@ class EvaluationObject:
 
     def _check_size(self, k, size):
         """
-        checking `size` argument; size needs to be >= k;
-        :param k: ranking size
-        :param size: search size, if size is None, it will set Elastisearch default value
-        :return: adjusted search size
+        Checking `size` argument; size needs to be >= k.
+
+        Parameters
+        ----------
+        k: int
+            ranking size
+        size: int or None
+            search size, if size is None, it will set Elastisearch default value
+
+        Returns
+        -------
+
+        size: int
+            adjusted search size
+
         """
         if size is not None:
             if size < k:
@@ -45,11 +54,22 @@ class EvaluationObject:
 
     def _get_search_result(self, query_id, size, fields):
         """
-        Sends a search request for every query to Elasticsearch and returns the result including highlighting
-        :param query_id: int, current query id
-        :param fields: list of fields that should be searched on
-        :param size: int, search size
-        :return: returns search result from Elasticsearch
+        Sends a search request for every query to Elasticsearch and returns the result including highlighting.
+
+        Parameters
+        ----------
+        query_id: int
+            current query id
+        size: int
+            search size
+        fields: list of strings
+            fields that should be searched on
+
+        Returns
+        -------
+        result: nested dict
+            search result from Elasticsearch
+
         """
         body = self._get_highlights_search_body(self.queries_rels[query_id]['question'], size, fields)
         result = self.elasticsearch.search(index=self.index, body=body)
@@ -57,10 +77,21 @@ class EvaluationObject:
 
     def _get_highlights_search_body(self, query, size=20, fields=["text", "title"]):
         """
-        :param query: str, query to search on
-        :param size: int, searched size
-        :param fields: list of str, fields, that should be searched
-        :return: highlighting for the matched results
+        Creates a search body with the highlights option to return a highlighted search result.
+
+        Parameters
+        ----------
+        query: str
+            query to search on
+        size: int
+            searched size
+        fields: list of str
+            fields, that should be searched
+
+        Returns
+        -------
+        search body for highlighting the matched results
+
         """
         return {
             "size": size,
@@ -81,10 +112,17 @@ class EvaluationObject:
         """
         Checks if query_ids is an int or None and transforms it to a list.
         If it's None, all available queries are used for the search.
-        :param query_ids: can be a list, an int or None
-        :return: transformed query ids
+
+        Parameters
+        ----------
+        query_ids: list, int or None
+
+        Returns
+        -------
+        query_ids: list
+            transformed query ids
+
         """
-        # in case of integer query_IDs argument; transform into list;
         if type(query_ids) == int:
             query_ids = [query_ids]
         if query_ids is None:
@@ -93,10 +131,22 @@ class EvaluationObject:
 
     def _create_hit(self, pos, hit, fields):
         """
-        Creates an overview of the hit from Elasticsearch
-        :param pos: ranking position
-        :type hit: hit found in Elasticsearch
-        :param fields: fields so analyze
+        Creates a structured dict of the hit from Elasticsearch.
+
+        Parameters
+        ----------
+        pos: int or str,
+            ranking position
+        hit: nested dict
+            hit found in Elasticsearch
+        fields: list of strings
+            fields so analyze
+
+        Returns
+        -------
+        variable: nested dict
+            structured hit
+
         """
         doc_fields = {}
         highlights = {}
@@ -122,12 +172,22 @@ class EvaluationObject:
 
     def _initialize_distributions(self, searched_queries=None, fields=['text', 'title'], size=20, k=20):
         """
-        Gets values for self.true_positives, self.false_positives and self.false_negatives
-                Calculates false positives from given search queries
-        :param searched_queries: int or list of int of query ids or None; if None it searches with all queries
-        :param fields: list of str, fields that should be searched on
-        :param size: int, search size
-        :param k: int, k top results that should be returned from Elasticsearch
+        Gets distributions and saves them in self.true_positives, self.false_positives and self.false_negatives.
+
+        Parameters
+        ----------
+        searched_queries: int or list or None
+            query ids; if None it searches with all queries
+        fields: list of str
+            fields that should be searched on
+        size: int
+            search size
+        k: int
+            number of results that should be returned and ranked
+
+        Returns
+        -------
+
         """
         size = self._check_size(k, size)
         searched_queries = self._check_searched_queries(searched_queries)
@@ -137,10 +197,21 @@ class EvaluationObject:
 
     def _calculate_recall(self, tp, fn):
         """
-        Calculates Recall
-        :param tp: int, true positives
-        :param fn: int, false negatives
-        :return: Recall value
+        Calculates Recall.
+
+        https://en.wikipedia.org/wiki/Precision_and_recall
+
+        Parameters
+        ----------
+        tp: int
+            true positives
+        fn: int
+            false negatives
+
+        Returns
+        -------
+        Recall value
+
         """
         if (tp + fn) == 0:
             warnings.warn('Sum of true positives and false negatives is 0. Please check your data, '
@@ -151,10 +222,21 @@ class EvaluationObject:
 
     def _calculate_precision(self, tp, fp):
         """
-        Calculates Precision
-        :param tp: int, true positives
-        :param fn: int, false negatives
-        :return: Precision value
+        Calculates Precision.
+
+        https://en.wikipedia.org/wiki/Precision_and_recall
+
+        Parameters
+        ----------
+        tp: int
+            true positives
+        fp: int
+            false positives
+
+        Returns
+        -------
+        Precision value
+
         """
         if (tp + fp) == 0:
             warnings.warn('Sum of true positives and false positives is 0. Please check your data, '
@@ -165,11 +247,23 @@ class EvaluationObject:
 
     def _calculate_fscore(self, precision, recall, factor=1):
         """
-        Calculates F-score
-        :param precision: int, precision value
-        :param recall: int, recall value
-        :param factor: int, 1 is the default to calculate F1-Score
-        :return: F-score value
+        Calculates F-Score.
+
+        https://en.wikipedia.org/wiki/F-score
+
+        Parameters
+        ----------
+        precision: int
+            precision value
+        recall: int
+            recall value
+        factor: int or float
+            1 is the default to calculate F1-Score, but you can also choose another factor
+
+        Returns
+        -------
+        F-Score value
+
         """
         if recall or precision != 0:
             if factor is 1:
@@ -182,13 +276,27 @@ class EvaluationObject:
 
     def get_true_positives(self, searched_queries=None, fields=['text', 'title'], size=20, k=20, dumps=False):
         """
-        Calculates true positives from given search queries
-        :param searched_queries: int or list of int of query ids or None; if None it searches with all queries
-        :param fields: list of str, fields that should be searched on
-        :param size: int, search size
-        :param k: int, k top results that should be returned from Elasticsearch
-        :param dumps: True or False, if True it returns json.dumps, if False it returns json
-        :return: true positives as json
+        Calculates true positives from given search queries.
+
+
+        Parameters
+        ----------
+        searched_queries: int or list or None
+            query ids; if None it searches with all queries
+        fields: list of str
+            fields that should be searched on
+        size: int
+            search size
+        k: int
+            top results that should be returned from Elasticsearch
+        dumps: True or False
+            if True it returns json.dumps, if False it returns json
+
+        Returns
+        -------
+
+        true positives: json
+
         """
         size = self._check_size(k, size)
         searched_queries = self._check_searched_queries(searched_queries)
@@ -212,13 +320,26 @@ class EvaluationObject:
 
     def get_false_positives(self, searched_queries=None, fields=['text', 'title'], size=20, k=20, dumps=False):
         """
-        Calculates false positives from given search queries
-        :param searched_queries: int or list of int of query ids or None; if None it searches with all queries
-        :param fields: list of str, fields that should be searched on
-        :param size: int, search size
-        :param k: int, k top results that should be returned from Elasticsearch
-        :param dumps: True or False, if True it returns json.dumps, if False it returns json
-        :return: false positives as json
+        Calculates false positives from given search queries.
+
+        Parameters
+        ----------
+        searched_queries: int or list or None
+            query ids; if None it searches with all queries
+        fields: list of str
+            fields that should be searched on
+        size: int
+            search size
+        k: int
+            top results that should be returned from Elasticsearch
+        dumps: True or False
+            if True it returns json.dumps, if False it returns json
+
+        Returns
+        -------
+
+        false positives: json
+
         """
         size = self._check_size(k, size)
         searched_queries = self._check_searched_queries(searched_queries)
@@ -243,13 +364,26 @@ class EvaluationObject:
 
     def get_false_negatives(self, searched_queries=None, fields=['text', 'title'], size=20, k=20, dumps=False):
         """
-        Calculates false negatives from given search queries
-        :param searched_queries: int or list of int of query ids or None; if None it searches with all queries
-        :param fields: list of str, fields that should be searched on
-        :param size: int, search size
-        :param k: int, k top results that should be returned from Elasticsearch
-        :param dumps: True or False, if True it returns json.dumps, if False it returns json
-        :return: false negatives as json
+        Calculates false negatives from given search queries.
+
+        Parameters
+        ----------
+        searched_queries: int or list or None
+            query ids; if None it searches with all queries
+        fields: list of str
+            fields that should be searched on
+        size: int
+            search size
+        k: int
+            top results that should be returned from Elasticsearch
+        dumps: True or False
+            if True it returns json.dumps, if False it returns json
+
+        Returns
+        -------
+
+        false negatives: json
+
         """
         size = self._check_size(k, size)
         searched_queries = self._check_searched_queries(searched_queries)
@@ -291,13 +425,26 @@ class EvaluationObject:
 
     def get_recall(self, searched_queries=None, fields=['text', 'title'], size=20, k=20, dumps=False):
         """
-        Calculates recall for every search query given
-        :param searched_queries: int or list of int of query ids or None; if None it searches with all queries
-        :param fields: list of str, fields that should be searched on
-        :param size: int, search size
-        :param k: int, k top results that should be returned from Elasticsearch
-        :param dumps: True or False, if True it returns json.dumps, if False saves to object variable
-        :return: json with Recall values
+        Calculates recall for every search query given.
+
+        Parameters
+        ----------
+        searched_queries: int or list or None
+            searched queries; if None it searches with all queries
+        fields: list of str
+            fields that should be searched on
+        size: int
+            search size
+        k: int
+            top results that should be returned from Elasticsearch
+        dumps: True or False
+            if True it returns json.dumps, if False it saves to object variable
+
+        Returns
+        -------
+
+        json with Recall values
+
         """
         if not self.true_positives:
             self._initialize_distributions(searched_queries, fields, size, k)
@@ -319,13 +466,26 @@ class EvaluationObject:
 
     def get_precision(self, searched_queries=None, fields=['text', 'title'], size=20, k=20, dumps=False):
         """
-        Calculates Precision for every given query
-        :param searched_queries: int or list of int of query ids or None; if None it searches with all queries
-        :param fields: list of str, fields that should be searched on
-        :param size: int, search size
-        :param k: int, k top results that should be returned from Elasticsearch
-        :param dumps: True or False, if True it returns json.dumps, if False saves to object variable
-        :return: json with Precision values
+        Calculates precision for every search query given.
+
+        Parameters
+        ----------
+        searched_queries: int or list or None
+            searched queries; if None it searches with all queries
+        fields: list of str
+            fields that should be searched on
+        size: int
+            search size
+        k: int
+            top results that should be returned from Elasticsearch
+        dumps: True or False
+            if True it returns json.dumps, if False it saves to object variable
+
+        Returns
+        -------
+
+        json with Precision values
+
         """
         if not self.true_positives:
             self._initialize_distributions(searched_queries, fields, size, k)
@@ -347,13 +507,28 @@ class EvaluationObject:
 
     def get_fscore(self, searched_queries=None, fields=['text', 'title'], size=20, k=20, dumps=False, factor=1):
         """
-        :param searched_queries: int or list of int of query ids or None; if None it searches with all queries
-        :param fields: list of str, fields that should be searched on
-        :param size: int, search size
-        :param k: int, k top results that should be returned from Elasticsearch
-        :param factor: int, can be used to weight the F score, default is 1
-        :param dumps: True or False, if True it returns json.dumps, if False saves to object variable
-        :return: F-Score value
+        Calculates f-score for every search query given.
+
+        Parameters
+        ----------
+        searched_queries: int or list or None
+            searched queries; if None it searches with all queries
+        fields: list of str
+            fields that should be searched on
+        size: int
+            search size
+        k: int
+            top results that should be returned from Elasticsearch
+        dumps: True or False
+            if True it returns json.dumps, if False it saves to object variable
+        factor: int
+            can be used to weight the F score, default is 1
+
+        Returns
+        -------
+
+        json with F-score values
+
         """
         if not self.recall:
             self.get_recall(searched_queries, fields, size, k, False)
@@ -363,7 +538,7 @@ class EvaluationObject:
         for query, data in self.precision.items():
             if not query == 'total':
                 fscore_value = self._calculate_fscore(self.precision[query]['precision'], self.recall[query]['recall'],
-                                                       factor)
+                                                      factor)
                 fscore[query]['fscore'] = fscore_value
         fscore = OrderedDict(sorted(fscore.items(), key=lambda i: i[1]['fscore']))
         fscore['total'] = self._calculate_fscore(self.precision['total'], self.recall['total'], factor)
@@ -374,11 +549,25 @@ class EvaluationObject:
 
     def count_distribution(self, distribution, distribution_json, dumps=False, k=20):
         """
-        :param dumps: True or False, if True it returns json.dumps, if False it returns json
-        :param distribution: string, 'true_positives', 'false_positives' or 'false_negatives'
-        :param distribution_json: json or json as str with all the distributions needed
-        :param k: int, size of k top search results
-        :return: counted distribution per query, as a sum and as a percentage
+        Counts given distribution per query, relevant documents and calculates percentages given the relevant documents.
+
+        Parameters
+        ----------
+        distribution: string
+            'true_positives', 'false_positives' or 'false_negatives'
+        distribution_json: json
+            json with all the distributions needed; e.g. EvaluationObject.true_positives
+        dumps: True or False
+            if True it returns json.dumps, if False it returns json
+        k: int
+            size of k top search results
+
+        Returns
+        -------
+
+        sorted_counts: json
+            counted distribution per query, as a sum and as a percentage
+
         """
         if isinstance(distribution_json, str):
             result_json = json.loads(distribution_json)
@@ -425,12 +614,25 @@ class EvaluationObject:
 
     def explain_query(self, query_id, doc_id, fields=['text', 'title'], dumps=True):
         """
-        Returns an Elasticsearch explanation for given query
-        :param query_id: int, query that should be explained
-        :param doc_id: int, id of document that should be explained
-        :param fields: list of str, fields that should be searched on
-        :param dumps: True by default, if False it won't convert dict to json
-        :return: json
+        Returns an Elasticsearch explanation for given query and document.
+
+        https://www.elastic.co/guide/en/elasticsearch/reference/current/search-explain.html
+
+        Parameters
+        ----------
+        query_id: int
+            id of query that should be explained
+        doc_id: int
+            id of document that should be explained
+        fields: list of str
+            fields that should be searched on
+        dumps: True or False
+            True by default, if False it won't convert dict to json
+
+        Returns
+        -------
+
+        json or dict explaining query and document match
         """
         query_body = {
             "query": {
@@ -500,11 +702,21 @@ class ComparisonTool:
 
     def _get_conditions(self, queries, eval_objs, conditions):
         """
-        Gets condition values for the vizualisation as a pandas data frame.
-        :param queries: int or list of ints of query ids
-        :param eval_objs: list of EvaluationObj
-        :param conditions: list of conditions that should be printed
-        :return: pandas data frame
+        Gets condition values for the visualization as a pandas data frame.
+
+        Parameters
+        ----------
+        queries: int or list
+            query ids
+        eval_objs: list
+            EvaluationObjs that should be compared
+        conditions: list
+            conditions that should be printed
+
+        Returns
+        -------
+        pandas data frame
+
         """
         vis_dict = defaultdict(list)
         for obj in eval_objs:
@@ -517,11 +729,21 @@ class ComparisonTool:
 
     def _get_distributions(self, queries, eval_objs, distributions):
         """
-        Gets distributions values for the vizualisation as a pandas data frame.
-        :param queries: int or list of ints of query ids
-        :param eval_objs: list of EvaluationObj
-        :param distributions: list of distributions that should be printed
-        :return: pandas data frame
+        Gets distribution values for the visualization as a pandas data frame.
+
+        Parameters
+        ----------
+        queries: int or list
+            query ids
+        eval_objs: list
+            EvaluationObjs that should be compared
+        distributions: list
+            distributions that should be printed
+
+        Returns
+        -------
+        pandas data frame
+
         """
         dis_dict = defaultdict(list)
         for obj in eval_objs:
@@ -535,11 +757,22 @@ class ComparisonTool:
     def _get_explain_terms(self, query_id, doc_id, fields, eval_objs):
         """
         Returns pandas data frame containing all the found terms and their scores.
-        :param query_id: int, query id of query that should be explained
-        :param doc_id: int, id of document that should be explained
-        :param fields: list of fields that should be searched, by default 'text' and 'title' are searched
-        :param eval_objs: list of EvaluationObj; if None it uses the ones from the ComparisonTool
-        :return: pandas data frame
+
+        Parameters
+        ----------
+        query_id: int
+            query id of query that should be explained
+        doc_id: int
+            id of document that should be explained
+        fields: list
+            fields that should be searched
+        eval_objs: list
+            EvaluationObjs that should be compared
+
+        Returns
+        -------
+        pandas data frame
+
         """
         explain_dict = defaultdict(list)
         for obj in eval_objs:
@@ -567,22 +800,33 @@ class ComparisonTool:
     def _get_csv_terms(self, query_id, doc_id, fields, eval_objs):
         """
         Returns dict containing all the found terms and their scores.
-        :param query_id: int, query id of query that should be explained
-        :param doc_id: int, id of document that should be explained
-        :param fields: list of fields that should be searched, by default 'text' and 'title' are searched
-        :param eval_objs: list of two EvaluationObj
-        :return: dict
+
+        Parameters
+        ----------
+        query_id: int
+            query id of query that should be explained
+        doc_id: int
+            id of document that should be explained
+        fields: list
+            fields that should be searched
+        eval_objs: list
+            EvaluationObjs that should be compared
+
+        Returns
+        -------
+
         """
         term_dict = defaultdict(dict)
         for obj in eval_objs:
             explain = obj.explain_query(query_id, doc_id, fields, dumps=False)
             for field in fields:
                 for function in explain[field]['details']:
-                    term_dict[obj.name][(self._extract_terms(function["function"]["description"]))] = str(function["function"]["value"]).replace('.', ',')
-        extra_1 = set(term_dict[eval_objs[0].name])-set(term_dict[eval_objs[1].name])
+                    term_dict[obj.name][(self._extract_terms(function["function"]["description"]))] = str(
+                        function["function"]["value"]).replace('.', ',')
+        extra_1 = set(term_dict[eval_objs[0].name]) - set(term_dict[eval_objs[1].name])
         for key in extra_1:
             term_dict[eval_objs[1].name][key] = 0
-        extra_2 = set(term_dict[eval_objs[1].name])-set(term_dict[eval_objs[0].name])
+        extra_2 = set(term_dict[eval_objs[1].name]) - set(term_dict[eval_objs[0].name])
         for key in extra_2:
             term_dict[eval_objs[0].name][key] = 0
         explain_dict = defaultdict()
@@ -598,9 +842,18 @@ class ComparisonTool:
 
     def _extract_terms(self, string):
         """
-        Extracts terms from explain_query method
-        :param string:
-        :return: list of extracted terms
+        Extracts terms from explain_query method.
+
+        Parameters
+        ----------
+        string: str
+            string of all the matched terms
+
+        Returns
+        -------
+        terms: list of str
+            extracted terms
+
         """
         term_regx = re.compile(':[a-zA-ZäöüÄÖÜß]*\s')
         terms = re.findall(term_regx, string)
@@ -610,10 +863,18 @@ class ComparisonTool:
     def calculate_difference(self, condition='fscore', dumps=False):
         """
         Calculates the difference per query for the given condition.
-        "fscore", "precision" and "recall" are possible conditions.
-        :param condition: string, "fscore", "precision" or "recall"
-        :param dumps: True or False, if True it returns json.dumps, if False saves to object variable
-        :return: dictionary with value differences
+
+        Parameters
+        ----------
+        condition: string
+            "fscore", "precision" or "recall"
+        dumps: True or False
+            if True it returns json.dumps, if False saves to object variable
+
+        Returns
+        -------
+        json with value differences
+
         """
         diff = defaultdict(dict)
         diff_name = condition + '_diffs'
@@ -633,10 +894,21 @@ class ComparisonTool:
 
     def get_disjoint_sets(self, distribution, highest=False):
         """
-        Returns the disjoint sets of the given distribution
-        :param distribution: str, possible arguments are 'false_positives' and 'false_negatives'
-        :param highest: if True it returns the set with the highest count of disjoints
-        :return: a dict with disjoint lists for each approach in a dictionary for each query regarding the distribution
+        Returns the disjoint sets of the given distribution.
+
+        Parameters
+        ----------
+        distribution: str
+            distribution to return; possible arguments are 'false_positives' and 'false_negatives'
+        highest: True or False
+            if True it only returns the set with the highest count of disjoints
+
+        Returns
+        -------
+
+        ordered_results: OrderedDict
+            disjoint lists for each approach in a dictionary for each query regarding the distribution
+
         """
         results = defaultdict(dict)
         # get query names
@@ -667,14 +939,29 @@ class ComparisonTool:
             return elements[-1]
 
     def visualize_distributions(self, queries=None, eval_objs=None,
-                                distributions=['true_positives', 'false_positives', 'false_negatives'], download=False,  path_to_file='./save_vis_distributions.svg'):
+                                distributions=['true_positives', 'false_positives', 'false_negatives'], download=False,
+                                path_to_file='./save_vis_distributions.svg'):
         """
         Visualizes distributions in comparison for given queries and given approaches.
-        :param queries: int or list of ints of query ids or None; if None it searches with all queries
-        :param eval_objs: list of EvaluationObj; if None it uses the ones from the ComparisonTool
-        :param distributions: list of distributions that should be printed; by default tp, fp and fn are used
-        :param download: True or False; by default False which leads to not saving the visualization as svg
-        :param path_to_file: string; path and filename the visualization should be saved to
+
+        Parameters
+        ----------
+        queries: int or list or None
+            if None it searches with all queries
+        eval_objs: list
+            EvaluationObjs; if None it uses the ones already implemented in the ComparisonTool object
+        distributions: list
+            distributions that should be printed; by default tp, fp and fn are used
+        download: True or False
+            saves the plot as svg; by default False which leads to not saving the visualization
+        path_to_file: string
+            path and filename the visualization should be saved to, e.g. './myfolder/save_this.svg'
+
+        Prints
+        -------
+
+        visualization via matplot as plt.show()
+
         """
         if not eval_objs:
             eval_objs = [self.eval_obj_1, self.eval_obj_2]
@@ -694,14 +981,29 @@ class ComparisonTool:
             plt.savefig(path_to_file, format="svg")
         plt.show()
 
-    def visualize_condition(self, queries=None, eval_objs=None, conditions=['precision', 'recall', 'fscore'], download=False,  path_to_file='./save_vis_condition.svg'):
+    def visualize_condition(self, queries=None, eval_objs=None, conditions=['precision', 'recall', 'fscore'],
+                            download=False, path_to_file='./save_vis_condition.svg'):
         """
-        Visualizes distributions in comparison for given queries and given approaches.
-        :param queries: int or list of ints of query ids or None; if None it searches with all queries
-        :param eval_objs: list of EvaluationObj; if None it uses the ones from the ComparisonTool
-        :param conditions: list of conditions that should be printed; by default precision, recall and f1-score are used
-        :param download: True or False; by default False which leads to not saving the visualization as svg
-        :param path_to_file: string; path and filename the visualization should be saved to
+        Visualizes conditions in comparison for given queries and given approaches.
+
+        Parameters
+        ----------
+        queries: int or list or None
+            if None it searches with all queries
+        eval_objs: list
+            EvaluationObjs; if None it uses the ones already implemented in the ComparisonTool object
+        conditions: list
+            conditions that should be printed; by default precision, recall and f1-score are used
+        download: True or False
+            saves the plot as svg; by default False which leads to not saving the visualization
+        path_to_file: string
+            path and filename the visualization should be saved to, e.g. './myfolder/save_this.svg'
+
+        Prints
+        -------
+
+        visualization via matplot as plt.show()
+
         """
         if conditions is None:
             conditions = ['precision', 'recall', 'fscore']
@@ -722,15 +1024,31 @@ class ComparisonTool:
             plt.savefig(path_to_file, format="svg")
         plt.show()
 
-    def visualize_explanation(self, query_id, doc_id, fields=['text', 'title'], eval_objs=None, download=False,  path_to_file='./save_vis_explaination.svg'):
+    def visualize_explanation(self, query_id, doc_id, fields=['text', 'title'], eval_objs=None, download=False,
+                              path_to_file='./save_vis_explanation.svg'):
         """
         Visualize in comparison which words were better scored using approach, specific query and a specific document.
-        :param query_id: int, query id of query that should be explained
-        :param doc_id: int, id of document that should be explained
-        :param fields: list of fields that should be searched, by default 'text' and 'title' are searched
-        :param eval_objs: list of EvaluationObj; if None it uses the ones from the ComparisonTool
-        :param download: True or False; by default False which leads to not saving the visualization as svg
-        :param path_to_file: string; path and filename the visualization should be saved to
+
+        Parameters
+        ----------
+        queries: int or list or None
+            if None it searches with all queries
+        doc_id: int
+            id of document that should be explained
+        fields: list
+            fields that should be searched, by default 'text' and 'title' are searched
+        eval_objs: list
+            EvaluationObjs; if None it uses the ones already implemented in the ComparisonTool object
+        download: True or False
+            saves the plot as svg; by default False which leads to not saving the visualization
+        path_to_file: string
+            path and filename the visualization should be saved to, e.g. './myfolder/save_this.svg'
+
+        Prints
+        -------
+
+        visualization via matplot as plt.show()
+
         """
         if not eval_objs:
             eval_objs = [self.eval_obj_1, self.eval_obj_2]
@@ -747,12 +1065,33 @@ class ComparisonTool:
     def visualize_explanation_csv(self, query_id, doc_id, path_to_save_to, fields=['text', 'title'], eval_objs=None):
         """
         Saves explanation table to csv
-        :param query_id: int, query id of query that should be explained
-        :param doc_id: int, id of document that should be explained
-        :param path_to_save_to: path and filename the csv should be saved to
-        :param fields: list of fields that should be searched, by default 'text' and 'title' are searched
-        :param eval_objs: list of exactly two EvaluationObj; if None it uses the ones from the ComparisonTool
-        :return: csv file to feed it into Google Sheets
+
+        Parameters
+        ----------
+        query_id: int
+            query id of query that should be explained
+        doc_id: int
+            id of document that should be explained
+        path_to_save_to: string
+            path and filename the visualization should be saved to, e.g. './myfolder/save_that.csv'
+        fields: list
+            fields that should be searched, by default 'text' and 'title' are searched
+        eval_objs: list or None
+            exactly two EvaluationObjs; if None it uses the ones from the ComparisonTool
+
+        Returns
+        -------
+        csv file to feed it to program to create graphs, e.g. Google Sheets or Microsoft Excel
+
+        """
+        """
+
+        :param query_id
+        :param doc_id
+        :param path_to_save_to
+        :param fields
+        :param eval_objs
+        :return:
         """
         if not eval_objs:
             eval_objs = [self.eval_obj_1, self.eval_obj_2]
