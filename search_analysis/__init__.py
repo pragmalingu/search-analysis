@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.1.12'
+__version__ = '0.1.13'
 
 import csv
 import pandas as pd
@@ -882,10 +882,15 @@ class ComparisonTool:
         for query, data in getattr(self.eval_obj_1, condition).items():
             if not query == 'total':
                 # save for each query the difference between condition value of approach 1 and approach 2
-                diff[query] = {diff_name: abs(data[condition] - getattr(self.eval_obj_2, condition)[query][condition])}
+                diff[query] = {
+                    str(self.eval_obj_1.name): data[condition],
+                    str(self.eval_obj_2.name): getattr(self.eval_obj_2, condition)[query][condition],
+                    diff_name: abs(data[condition] - getattr(self.eval_obj_2, condition)[query][condition])}
         # sort values descending
         diff_ordered = OrderedDict(sorted(diff.items(), key=lambda i: i[1][diff_name]))
         diff_ordered['total'] = {
+            str(self.eval_obj_1.name): getattr(self.eval_obj_1, condition)['total'],
+            str(self.eval_obj_2.name): getattr(self.eval_obj_2, condition)['total'],
             diff_name: abs(getattr(self.eval_obj_1, condition)['total'] - getattr(self.eval_obj_2, condition)['total'])}
         if dumps:
             return json.dumps(diff_ordered, indent=4)
