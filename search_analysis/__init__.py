@@ -2,13 +2,16 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.1.13'
+__version__ = '0.1.14'
 
+import collections
 import csv
+from collections import OrderedDict, defaultdict
+import warnings
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from collections import OrderedDict, defaultdict
+from elasticsearch import Elasticsearch
 import json
 import re
 
