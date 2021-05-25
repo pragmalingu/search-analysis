@@ -948,7 +948,7 @@ class ComparisonTool:
 
     def get_specific_comparison(self, query_id, doc_id, fields=['text', 'title']):
         """
-        Function to get position, highlights and scores for a specific query and a specific query in comparison.
+        Function to get position, highlights and scores for a specific query and a specific document in comparison.
 
         Parameters
         ----------
