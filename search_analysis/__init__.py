@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.1.14'
+__version__ = '0.1.15'
 
 import collections
 import csv
@@ -945,6 +945,49 @@ class ComparisonTool:
         else:
             elements = list(ordered_results.items())
             return elements[-1]
+
+    def get_specific_comparison(self, query_id, doc_id, fields=['text', 'title']):
+        """
+        Function to get position, highlights and scores for a specific query and a specific query in comparison.
+
+        Parameters
+        ----------
+        query_id
+        doc_id: int
+            doc id that should be looked at
+        fields: list
+            list of fields that should be searched on
+        Returns
+        -------
+        json.dumps(comp_dict): dict dumped as json
+            filled with comparison for given query and doc id
+        """
+        comp_dict = defaultdict()
+        attr_list = ['true_positives', 'false_positives', 'false_negatives']
+        eval_objs = [self.eval_obj_1, self.eval_obj_2]
+        comp_dict['Query ' + str(query_id)] = self.qrys_rels[query_id]
+        comp_dict[str(self.eval_obj_1.name)] = defaultdict()
+        comp_dict[str(self.eval_obj_2.name)] = defaultdict()
+        for attr in attr_list:
+            for obj in eval_objs:
+                if 'Query_' + str(query_id) in getattr(obj, attr).keys():
+                    hit_list = getattr(obj, attr)['Query_' + str(query_id)][attr]
+                    for hit in hit_list:
+                        if hit['doc']['id'] == doc_id:
+                            try:
+                                if not comp_dict[str(obj.name)]:
+                                    comp_dict['Document ' + str(doc_id)] = {field: hit['doc'][field] for field in
+                                                                            fields}
+                                    comp_dict[str(obj.name)]['position'] = hit['position']
+                                    comp_dict[str(obj.name)]['score'] = hit['score']
+                                    comp_dict[str(obj.name)]['highlight'] = hit['highlight']
+                                    comp_dict[str(obj.name)]['distribution'] = attr
+                            except KeyError:
+                                pass
+        for obj in eval_objs:
+            if not comp_dict[str(obj.name)]:
+                logging.warning('There is no hit for query ' + str(query_id) + ' and document ' + str(doc_id) + '. This might be because of a too small size. Keep in mind that the size is 20 by default.')
+        return print(json.dumps(comp_dict, indent=4))
 
     def visualize_distributions(self, queries=None, eval_objs=None,
                                 distributions=['true_positives', 'false_positives', 'false_negatives'], download=False,
