@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.1.16'
+__version__ = '0.1.17'
 
 import collections
 import csv
@@ -824,7 +824,7 @@ class ComparisonTool:
             explain = obj.explain_query(query_id, doc_id, fields, dumps=False)
             for field in fields:
                 for function in explain[field]['details']:
-                    term_dict[obj.name][(self._extract_terms(function["function"]["description"]))] = str(
+                    term_dict[obj.name][field+': '+(self._extract_terms(function["function"]["description"]))] = str(
                         function["function"]["value"]).replace('.', ',')
         extra_1 = set(term_dict[eval_objs[0].name]) - set(term_dict[eval_objs[1].name])
         for key in extra_1:
