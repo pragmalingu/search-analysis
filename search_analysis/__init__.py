@@ -2,7 +2,7 @@
 
 __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
-__version__ = '0.1.15'
+__version__ = '0.1.16'
 
 import collections
 import csv
@@ -1029,6 +1029,7 @@ class ComparisonTool:
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         if download:
+            plt.gcf().subplots_adjust(bottom=0.08)
             plt.savefig(path_to_file, format="svg")
         plt.show()
 
@@ -1072,6 +1073,7 @@ class ComparisonTool:
         g.despine(left=True)
         g.set_axis_labels('Approach comparison')
         if download:
+            plt.gcf().subplots_adjust(bottom=0.08)
             plt.savefig(path_to_file, format="svg")
         plt.show()
 
@@ -1110,6 +1112,7 @@ class ComparisonTool:
         g = sns.barplot(x='Term Score', y='Terms', data=panda_explain, hue="Approach")
         sns.despine(left=True, bottom=True)
         if download:
+            plt.gcf().subplots_adjust(bottom=0.08)
             plt.savefig(path_to_file, format="svg")
         plt.show()
 
