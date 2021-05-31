@@ -22,6 +22,16 @@ import sys
 sys.path.insert(0, os.path.abspath('..'))
 
 import search_analysis
+import collections
+import csv
+from collections import OrderedDict, defaultdict
+import warnings
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from elasticsearch import Elasticsearch
+import json
+import re
 
 autodoc_mock_imports = ['_tkinter']
 
