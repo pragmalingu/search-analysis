@@ -18,7 +18,7 @@ import re
 
 class EvaluationObject:
     def __init__(self, host, query_rel_dict, index, name):
-        self.queries_rels = query_rel_dict
+        self.queries_rels = dict(query_rel_dict)
         self.index = index
         self.name = name
         self.elasticsearch = Elasticsearch([host], ca_certs=False, verify_certs=False, read_timeout=120)
