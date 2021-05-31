@@ -6,8 +6,8 @@ Search Analysis
 .. image:: https://img.shields.io/pypi/v/search_analysis.svg
         :target: https://pypi.python.org/pypi/search_analysis
 
-.. image:: https://img.shields.io/travis/MiriamPragmalingu/search_analysis.svg
-        :target: https://travis-ci.com/MiriamPragmalingu/search_analysis
+.. image:: https://img.shields.io/travis/pragmalingu/search_analysis.svg
+        :target: https://travis-ci.com/pragmalingu/search_analysis
 
 .. image:: https://readthedocs.org/projects/search-analysis/badge/?version=latest
         :target: https://search-analysis.readthedocs.io/en/latest/?version=latest
