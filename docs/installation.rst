@@ -32,13 +32,13 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/pragmalingu/search-analysis
+    $ git clone git://github.com/MiriamPragmalingu/search_analysis
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl -OJL https://github.com/pragmalingu/search-analysis/tarball/main
+    $ curl -OJL https://github.com/MiriamPragmalingu/search_analysis/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -47,5 +47,5 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Github repo: https://github.com/pragmalingu/search-analysis
-.. _tarball: https://github.com/pragmalingu/search-analysis/tarball/main
+.. _Github repo: https://github.com/MiriamPragmalingu/search_analysis
+.. _tarball: https://github.com/MiriamPragmalingu/search_analysis/tarball/master

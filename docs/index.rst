@@ -1,5 +1,5 @@
 Welcome to Search Analysis's documentation!
-===========================================
+======================================
 
 .. toctree::
    :maxdepth: 2
