@@ -1,2 +1,2 @@
-pandas==1.15
+pandas==1.1.5
 elasticsearch==7.11.0
