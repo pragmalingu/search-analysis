@@ -683,10 +683,11 @@ class ComparisonTool:
     def __init__(self, host, qry_rel_dict, eval_obj_1=None, eval_obj_2=None,
                  fields=['text', 'title'], index_1=None, index_2=None, name_1='approach_1',
                  name_2='approach_2', size=20, k=20):
+        self.qrys_rels = qry_rel_dict
         if eval_obj_1 is None:
-            eval_obj_1 = EvaluationObject(host, qry_rel_dict, index_1, name_1)
+            eval_obj_1 = EvaluationObject(host, self.qrys_rels, index_1, name_1)
         if eval_obj_2 is None:
-            eval_obj_1 = EvaluationObject(host, qry_rel_dict, index_2, name_2)
+            eval_obj_1 = EvaluationObject(host, self.qrys_rels, index_2, name_2)
         self.eval_obj_1 = eval_obj_1
         self.eval_obj_2 = eval_obj_2
         self.eval_obj_1.get_fscore(None, fields, size, k)
@@ -794,7 +795,7 @@ class ComparisonTool:
         #           explain_dict[eval_objs[0].name]['Group'] = group_counter
         return pd.DataFrame(data=explain_dict).sort_values(by=['Terms'])
 
-    def _get_csv_terms(self, query_id, doc_id, fields, eval_objs):
+    def _get_csv_terms(self, query_id, doc_id, fields, decimal_separator, eval_objs):
         """
         Returns dict containing all the found terms and their scores.
 
@@ -806,6 +807,8 @@ class ComparisonTool:
             id of document that should be explained
         fields: list
             fields that should be searched
+        decimal_separator: string
+            choose a decimal separator; by default it's a comma, but for english you might prefer a dot
         eval_objs: list
             EvaluationObjs that should be compared
 
@@ -819,7 +822,7 @@ class ComparisonTool:
             for field in fields:
                 for function in explain[field]['details']:
                     term_dict[obj.name][field+': '+(self._extract_terms(function["function"]["description"]))] = str(
-                        function["function"]["value"]).replace('.', ',')
+                        function["function"]["value"]).replace('.', decimal_separator)
         extra_1 = set(term_dict[eval_objs[0].name]) - set(term_dict[eval_objs[1].name])
         for key in extra_1:
             term_dict[eval_objs[1].name][key] = 0
@@ -942,7 +945,7 @@ class ComparisonTool:
 
     def get_specific_comparison(self, query_id, doc_id, fields=['text', 'title']):
         """
-        Function to get position, highlights and scores for a specific query and a specific document in comparison.
+        Function to get position, highlights and scores for a specific query and a specific query in comparison.
 
         Parameters
         ----------
@@ -1072,7 +1075,7 @@ class ComparisonTool:
         plt.show()
 
     def visualize_explanation(self, query_id, doc_id, fields=['text', 'title'], eval_objs=None, download=False,
-                              path_to_file='./save_vis_explanation.svg'):
+                              path_to_file='./save_vis_explaination.svg'):
         """
         Visualize in comparison which words were better scored using approach, specific query and a specific document.
 
@@ -1110,7 +1113,7 @@ class ComparisonTool:
             plt.savefig(path_to_file, format="svg")
         plt.show()
 
-    def visualize_explanation_csv(self, query_id, doc_id, path_to_save_to, fields=['text', 'title'], eval_objs=None):
+    def visualize_explanation_csv(self, query_id, doc_id, path_to_save_to, fields=['text', 'title'], decimal_separator=',', eval_objs=None):
         """
         Saves explanation table to csv
 
@@ -1124,6 +1127,8 @@ class ComparisonTool:
             path and filename the visualization should be saved to, e.g. './myfolder/save_that.csv'
         fields: list
             fields that should be searched, by default 'text' and 'title' are searched
+        decimal_separator: string
+            choose a decimal separator; by default it's a comma, but for english you might prefer a dot
         eval_objs: list or None
             exactly two EvaluationObjs; if None it uses the ones from the ComparisonTool
 
@@ -1132,18 +1137,9 @@ class ComparisonTool:
         csv file to feed it to program to create graphs, e.g. Google Sheets or Microsoft Excel
 
         """
-        """
-
-        :param query_id
-        :param doc_id
-        :param path_to_save_to
-        :param fields
-        :param eval_objs
-        :return:
-        """
         if not eval_objs:
             eval_objs = [self.eval_obj_1, self.eval_obj_2]
-        panda_explain = self._get_csv_terms(query_id, doc_id, fields, eval_objs)
+        panda_explain = self._get_csv_terms(query_id, doc_id, fields, decimal_separator, eval_objs)
         keys = sorted(panda_explain.keys())
         with open(path_to_save_to, "w") as outfile:
             writer = csv.writer(outfile, delimiter=";")
