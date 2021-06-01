@@ -11,11 +11,11 @@ import re
 
 
 class EvaluationObject:
-    def __init__(self, host, query_rel_dict, index, name):
+    def __init__(self, host, query_rel_dict, index, name, verified_certificates=False):
         self.queries_rels = dict(query_rel_dict)
         self.index = index
         self.name = name
-        self.elasticsearch = Elasticsearch([host], ca_certs=False, verify_certs=False, read_timeout=120)
+        self.elasticsearch = Elasticsearch([host], ca_certs=False, verify_certs=verified_certificates, read_timeout=120)
         self.elasticsearch.ping()
         self.true_positives = {}
         self.false_positives = {}
