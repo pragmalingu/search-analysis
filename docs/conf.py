@@ -34,6 +34,8 @@ import sphinx_rtd_theme
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 
+autoclass_content = "both"
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -85,9 +87,10 @@ todo_include_todos = False
 # a list of builtin themes.
 # html_theme = 'classic'
 
-on_rtd = os.environ.get('READTHEDOCS') == 'True'
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
 if on_rtd:
-    html_theme = 'sphinx_rtd_theme'
+    html_theme = 'default'
 else:
     html_theme = 'sphinx_rtd_theme'
 
