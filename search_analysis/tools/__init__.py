@@ -32,15 +32,15 @@ class EvaluationObject:
 
         Parameters
         ----------
-        k: int
+        :arg k: int
             ranking size
-        size: int or None
+        :arg size: int or None
             search size, if size is None, it will set Elastisearch default value
 
-        Returns
+        :Returns:
         -------
 
-        size: int
+        :size: int
             adjusted search size
 
         """
@@ -55,16 +55,16 @@ class EvaluationObject:
 
         Parameters
         ----------
-        query_id: int
+        :arg query_id: int
             current query id
-        size: int
+        :arg size: int
             search size
-        fields: list of strings
+        :arg fields: list of strings
             fields that should be searched on
 
-        Returns
+        :Returns:
         -------
-        result: nested dict
+        :result: nested dict
             search result from Elasticsearch
 
         """
@@ -78,14 +78,14 @@ class EvaluationObject:
 
         Parameters
         ----------
-        query: str
+        :arg query: str
             query to search on
-        size: int
+        :arg size: int
             searched size
-        fields: list of str
+        :arg fields: list of str
             fields, that should be searched
 
-        Returns
+        :Returns:
         -------
         search body for highlighting the matched results
 
@@ -112,11 +112,11 @@ class EvaluationObject:
 
         Parameters
         ----------
-        query_ids: list, int or None
+        :arg query_ids: list, int or None
 
-        Returns
+        :Returns:
         -------
-        query_ids: list
+        :query_ids: list
             transformed query ids
 
         """
@@ -132,16 +132,16 @@ class EvaluationObject:
 
         Parameters
         ----------
-        pos: int or str,
+        :arg pos: int or str,
             ranking position
-        hit: nested dict
+        :arg hit: nested dict
             hit found in Elasticsearch
-        fields: list of strings
+        :arg fields: list of strings
             fields so analyze
 
-        Returns
+        :Returns:
         -------
-        variable: nested dict
+        :variable: nested dict
             structured hit
 
         """
@@ -173,13 +173,13 @@ class EvaluationObject:
 
         Parameters
         ----------
-        searched_queries: int or list or None
+        :arg searched_queries: int or list or None
             query ids; if None it searches with all queries
-        fields: list of str
+        :arg fields: list of str
             fields that should be searched on
-        size: int
+        :arg size: int
             search size
-        k: int
+        :arg k: int
             number of results that should be returned and ranked
 
         Returns
@@ -200,12 +200,12 @@ class EvaluationObject:
 
         Parameters
         ----------
-        tp: int
+        :arg tp: int
             true positives
-        fn: int
+        :arg fn: int
             false negatives
 
-        Returns
+        :Returns:
         -------
         Recall value
 
@@ -225,12 +225,12 @@ class EvaluationObject:
 
         Parameters
         ----------
-        tp: int
+        :arg tp: int
             true positives
-        fp: int
+        :arg fp: int
             false positives
 
-        Returns
+        :Returns:
         -------
         Precision value
 
@@ -250,14 +250,14 @@ class EvaluationObject:
 
         Parameters
         ----------
-        precision: int
+        :arg precision: int
             precision value
-        recall: int
+        :arg recall: int
             recall value
-        factor: int or float
+        :arg factor: int or float
             1 is the default to calculate F1-Score, but you can also choose another factor
 
-        Returns
+        :Returns:
         -------
         F-Score value
 
@@ -278,21 +278,21 @@ class EvaluationObject:
 
         Parameters
         ----------
-        searched_queries: int or list or None
+        :arg searched_queries: int or list or None
             query ids; if None it searches with all queries
-        fields: list of str
+        :arg fields: list of str
             fields that should be searched on
-        size: int
+        :arg size: int
             search size
-        k: int
+        :arg k: int
             top results that should be returned from Elasticsearch
-        dumps: True or False
+        :arg dumps: True or False
             if True it returns json.dumps, if False it returns json
 
-        Returns
+        :Returns:
         -------
 
-        true positives: json
+        :true positives: json
 
         """
         size = self._check_size(k, size)
@@ -321,21 +321,21 @@ class EvaluationObject:
 
         Parameters
         ----------
-        searched_queries: int or list or None
+        :arg searched_queries: int or list or None
             query ids; if None it searches with all queries
-        fields: list of str
+        :arg fields: list of str
             fields that should be searched on
-        size: int
+        :arg size: int
             search size
-        k: int
+        :arg k: int
             top results that should be returned from Elasticsearch
-        dumps: True or False
+        :arg dumps: True or False
             if True it returns json.dumps, if False it returns json
 
-        Returns
+        :Returns:
         -------
 
-        false positives: json
+        :false positives: json
 
         """
         size = self._check_size(k, size)
@@ -365,21 +365,21 @@ class EvaluationObject:
 
         Parameters
         ----------
-        searched_queries: int or list or None
+        :arg searched_queries: int or list or None
             query ids; if None it searches with all queries
-        fields: list of str
+        :arg fields: list of str
             fields that should be searched on
-        size: int
+        :arg size: int
             search size
-        k: int
+        :arg k: int
             top results that should be returned from Elasticsearch
-        dumps: True or False
+        :arg dumps: True or False
             if True it returns json.dumps, if False it returns json
 
-        Returns
+        :Returns:
         -------
 
-        false negatives: json
+        :false negatives: json
 
         """
         size = self._check_size(k, size)
@@ -426,18 +426,18 @@ class EvaluationObject:
 
         Parameters
         ----------
-        searched_queries: int or list or None
+        :arg searched_queries: int or list or None
             searched queries; if None it searches with all queries
-        fields: list of str
+        :arg fields: list of str
             fields that should be searched on
-        size: int
+        :arg size: int
             search size
-        k: int
+        :arg k: int
             top results that should be returned from Elasticsearch
-        dumps: True or False
+        :arg dumps: True or False
             if True it returns json.dumps, if False it saves to object variable
 
-        Returns
+        :Returns:
         -------
 
         json with Recall values
@@ -467,18 +467,18 @@ class EvaluationObject:
 
         Parameters
         ----------
-        searched_queries: int or list or None
+        :arg searched_queries: int or list or None
             searched queries; if None it searches with all queries
-        fields: list of str
+        :arg fields: list of str
             fields that should be searched on
-        size: int
+        :arg size: int
             search size
-        k: int
+        :arg k: int
             top results that should be returned from Elasticsearch
-        dumps: True or False
+        :arg dumps: True or False
             if True it returns json.dumps, if False it saves to object variable
 
-        Returns
+        :Returns:
         -------
 
         json with Precision values
@@ -508,20 +508,20 @@ class EvaluationObject:
 
         Parameters
         ----------
-        searched_queries: int or list or None
+        :arg searched_queries: int or list or None
             searched queries; if None it searches with all queries
-        fields: list of str
+        :arg fields: list of str
             fields that should be searched on
-        size: int
+        :arg size: int
             search size
-        k: int
+        :arg k: int
             top results that should be returned from Elasticsearch
-        dumps: True or False
+        :arg dumps: True or False
             if True it returns json.dumps, if False it saves to object variable
-        factor: int
+        :arg factor: int
             can be used to weight the F score, default is 1
 
-        Returns
+        :Returns:
         -------
 
         json with F-score values
@@ -550,20 +550,19 @@ class EvaluationObject:
 
         Parameters
         ----------
-        distribution: string
+        :arg distribution: string
             'true_positives', 'false_positives' or 'false_negatives'
-        distribution_json: json
+        :arg distribution_json: json
             json with all the distributions needed; e.g. EvaluationObject.true_positives
-        dumps: True or False
+        :arg dumps: True or False
             if True it returns json.dumps, if False it returns json
-        k: int
+        :arg k: int
             size of k top search results
 
-        Returns
-        -------
-
-        sorted_counts: json
-            counted distribution per query, as a sum and as a percentage
+        :Returns:
+        ---------
+            :sorted_counts: json
+                    counted distribution per query, as a sum and as a percentage
 
         """
         if isinstance(distribution_json, str):
@@ -617,16 +616,16 @@ class EvaluationObject:
 
         Parameters
         ----------
-        query_id: int
+        :arg query_id: int
             id of query that should be explained
-        doc_id: int
+        :arg doc_id: int
             id of document that should be explained
-        fields: list of str
+        :arg fields: list of str
             fields that should be searched on
-        dumps: True or False
+        :arg dumps: True or False
             True by default, if False it won't convert dict to json
 
-        Returns
+        :Returns:
         -------
 
         json or dict explaining query and document match
@@ -704,14 +703,14 @@ class ComparisonTool:
 
         Parameters
         ----------
-        queries: int or list
+        :arg queries: int or list
             query ids
-        eval_objs: list
+        :arg eval_objs: list
             EvaluationObjs that should be compared
-        conditions: list
+        :arg conditions: list
             conditions that should be printed
 
-        Returns
+        :Returns:
         -------
         pandas data frame
 
@@ -731,14 +730,14 @@ class ComparisonTool:
 
         Parameters
         ----------
-        queries: int or list
+        :arg queries: int or list
             query ids
-        eval_objs: list
+        :arg eval_objs: list
             EvaluationObjs that should be compared
-        distributions: list
+        :arg distributions: list
             distributions that should be printed
 
-        Returns
+        :Returns:
         -------
         pandas data frame
 
@@ -758,16 +757,16 @@ class ComparisonTool:
 
         Parameters
         ----------
-        query_id: int
+        :arg query_id: int
             query id of query that should be explained
-        doc_id: int
+        :arg doc_id: int
             id of document that should be explained
-        fields: list
+        :arg fields: list
             fields that should be searched
-        eval_objs: list
+        :arg eval_objs: list
             EvaluationObjs that should be compared
 
-        Returns
+        :Returns:
         -------
         pandas data frame
 
@@ -801,15 +800,15 @@ class ComparisonTool:
 
         Parameters
         ----------
-        query_id: int
+        :arg query_id: int
             query id of query that should be explained
-        doc_id: int
+        :arg doc_id: int
             id of document that should be explained
-        fields: list
+        :arg fields: list
             fields that should be searched
-        decimal_separator: string
+        :arg decimal_separator: string
             choose a decimal separator; by default it's a comma, but for english you might prefer a dot
-        eval_objs: list
+        :arg eval_objs: list
             EvaluationObjs that should be compared
 
         Returns
@@ -846,12 +845,12 @@ class ComparisonTool:
 
         Parameters
         ----------
-        string: str
+        :arg string: str
             string of all the matched terms
 
-        Returns
+        :Returns:
         -------
-        terms: list of str
+        :terms: list of str
             extracted terms
 
         """
@@ -866,12 +865,12 @@ class ComparisonTool:
 
         Parameters
         ----------
-        condition: string
+        :arg condition: string
             "fscore", "precision" or "recall"
-        dumps: True or False
+        :arg dumps: True or False
             if True it returns json.dumps, if False saves to object variable
 
-        Returns
+        :Returns:
         -------
         json with value differences
 
@@ -903,15 +902,15 @@ class ComparisonTool:
 
         Parameters
         ----------
-        distribution: str
+        :arg distribution: str
             distribution to return; possible arguments are 'false_positives' and 'false_negatives'
-        highest: True or False
+        :arg highest: True or False
             if True it only returns the set with the highest count of disjoints
 
-        Returns
+        :Returns:
         -------
 
-        ordered_results: OrderedDict
+        :ordered_results: OrderedDict
             disjoint lists for each approach in a dictionary for each query regarding the distribution
 
         """
@@ -949,14 +948,14 @@ class ComparisonTool:
 
         Parameters
         ----------
-        query_id
-        doc_id: int
+        :arg query_id
+        :arg doc_id: int
             doc id that should be looked at
-        fields: list
+        :arg fields: list
             list of fields that should be searched on
-        Returns
+        :Returns:
         -------
-        json.dumps(comp_dict): dict dumped as json
+        :json.dumps(comp_dict): dict dumped as json
             filled with comparison for given query and doc id
         """
         comp_dict = defaultdict()
@@ -994,18 +993,18 @@ class ComparisonTool:
 
         Parameters
         ----------
-        queries: int or list or None
+        :arg queries: int or list or None
             if None it searches with all queries
-        eval_objs: list
+        :arg eval_objs: list
             EvaluationObjs; if None it uses the ones already implemented in the ComparisonTool object
-        distributions: list
+        :arg distributions: list
             distributions that should be printed; by default tp, fp and fn are used
-        download: True or False
+        :arg download: True or False
             saves the plot as svg; by default False which leads to not saving the visualization
-        path_to_file: string
+        :arg path_to_file: string
             path and filename the visualization should be saved to, e.g. './myfolder/save_this.svg'
 
-        Prints
+        :Prints:
         -------
 
         visualization via matplot as plt.show()
@@ -1037,18 +1036,18 @@ class ComparisonTool:
 
         Parameters
         ----------
-        queries: int or list or None
+        :arg queries: int or list or None
             if None it searches with all queries
-        eval_objs: list
+        :arg eval_objs: list
             EvaluationObjs; if None it uses the ones already implemented in the ComparisonTool object
-        conditions: list
+        :arg conditions: list
             conditions that should be printed; by default precision, recall and f1-score are used
-        download: True or False
+        :arg download: True or False
             saves the plot as svg; by default False which leads to not saving the visualization
-        path_to_file: string
+        :arg path_to_file: string
             path and filename the visualization should be saved to, e.g. './myfolder/save_this.svg'
 
-        Prints
+        :Prints:
         -------
 
         visualization via matplot as plt.show()
@@ -1081,20 +1080,20 @@ class ComparisonTool:
 
         Parameters
         ----------
-        queries: int or list or None
+        :arg queries: int or list or None
             if None it searches with all queries
-        doc_id: int
+        :arg doc_id: int
             id of document that should be explained
-        fields: list
+        :arg fields: list
             fields that should be searched, by default 'text' and 'title' are searched
-        eval_objs: list
+        :arg eval_objs: list
             EvaluationObjs; if None it uses the ones already implemented in the ComparisonTool object
-        download: True or False
+        :arg download: True or False
             saves the plot as svg; by default False which leads to not saving the visualization
-        path_to_file: string
+        :arg path_to_file: string
             path and filename the visualization should be saved to, e.g. './myfolder/save_this.svg'
 
-        Prints
+        :Prints:
         -------
 
         visualization via matplot as plt.show()
@@ -1119,20 +1118,20 @@ class ComparisonTool:
 
         Parameters
         ----------
-        query_id: int
+        :arg query_id: int
             query id of query that should be explained
-        doc_id: int
+        :arg doc_id: int
             id of document that should be explained
-        path_to_save_to: string
+        :arg path_to_save_to: string
             path and filename the visualization should be saved to, e.g. './myfolder/save_that.csv'
-        fields: list
+        :arg fields: list
             fields that should be searched, by default 'text' and 'title' are searched
-        decimal_separator: string
+        :arg decimal_separator: string
             choose a decimal separator; by default it's a comma, but for english you might prefer a dot
-        eval_objs: list or None
+        :arg eval_objs: list or None
             exactly two EvaluationObjs; if None it uses the ones from the ComparisonTool
 
-        Returns
+        :Returns:
         -------
         csv file to feed it to program to create graphs, e.g. Google Sheets or Microsoft Excel
 
