@@ -1,14 +1,6 @@
 search\_analysis package
 ========================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   search_analysis.tools
-
 Module contents
 ---------------
 

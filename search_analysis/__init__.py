@@ -4,5 +4,5 @@ __author__ = """PragmaLingu"""
 __email__ = 'info@pragmalingu.de'
 __version__ = '0.1.22'
 
-from .tools import EvaluationObject
-from .tools import ComparisonTool
+from . import EvaluationObject
+from . import ComparisonTool
