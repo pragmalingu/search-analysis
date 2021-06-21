@@ -15,7 +15,10 @@ class EvaluationObject:
         self.queries_rels = dict(query_rel_dict)
         self.index = index
         self.name = name
-        self.elasticsearch = Elasticsearch([host], ca_certs=False, verify_certs=verified_certificates, read_timeout=120)
+        if verified_certificates:
+            self.elasticsearch = Elasticsearch([host])
+        else:
+            self.elasticsearch = Elasticsearch([host], ca_certs=False, verify_certs=verified_certificates, read_timeout=120)
         self.elasticsearch.ping()
         self.true_positives = {}
         self.false_positives = {}
