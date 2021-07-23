@@ -73,6 +73,9 @@ Installation
 Installation
 ============
 
+To build the documents you have to run the nox task responsible for building thte documents
+
+    nox --session=docs
 
 Stable release
 --------------
