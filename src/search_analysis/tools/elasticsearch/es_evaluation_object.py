@@ -4,7 +4,7 @@ from elasticsearch import Elasticsearch
 import json
 import re
 
-from src.search_analysis import EvaluationObject
+from search_analysis.tools import EvaluationObject
 
 
 class ESEvaluationObject(EvaluationObject):
@@ -561,8 +561,8 @@ class ESEvaluationObject(EvaluationObject):
 
         :Returns:
         ---------
-            :sorted_counts: json
-                    counted distribution per query, as a sum and as a percentage
+        :sorted_counts: json
+                counted distribution per query, as a sum and as a percentage
 
         """
         if isinstance(distribution_json, str):

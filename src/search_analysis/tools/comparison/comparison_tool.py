@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import json
 import re
 
-from src.search_analysis import ComparisonToolBase
-from src.search_analysis.tools.elasticsearch.es_evaluation_object import ESEvaluationObject
+from search_analysis.tools import ComparisonToolBase
+from search_analysis.tools.elasticsearch.es_evaluation_object import ESEvaluationObject
 
 
 class ComparisonTool(ComparisonToolBase):
