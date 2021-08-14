@@ -12,12 +12,12 @@ To use Search Analysis in a project::
 Evaluation Object
 -----------------
 
-.. autoclass:: EvaluationObject
+.. autoclass:: search_analysis.tools.elasticsearch.ESEvaluationObject
    :members:
 
 
 Comparison Tool
 -----------------
 
-.. autoclass:: ComparisonTool
+.. autoclass:: search_analysis.tools.comparison.comparison_tool.ComparisonTool
    :members:

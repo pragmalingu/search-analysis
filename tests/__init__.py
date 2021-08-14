@@ -1,1 +1,1 @@
-"""Unit test package for search_analysis."""
+"""Test suite for the search_analysis package."""
