@@ -5,6 +5,7 @@ import logging
 import re
 from collections import defaultdict
 from collections import OrderedDict
+from typing import List, Dict, DefaultDict, Union, Tuple
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -13,21 +14,23 @@ import seaborn as sns
 from search_analysis.tools import ComparisonToolBase
 from search_analysis.tools.elasticsearch.es_evaluation_object import ESEvaluationObject
 
+from src.search_analysis import EvaluationObject
+
 
 class ComparisonTool(ComparisonToolBase):
     def __init__(
         self,
-        host,
+        host: str,
         qry_rel_dict,
-        eval_obj_1=None,
-        eval_obj_2=None,
-        fields=["text", "title"],
-        index_1=None,
-        index_2=None,
-        name_1="approach_1",
-        name_2="approach_2",
-        size=20,
-        k=20,
+        eval_obj_1: EvaluationObject,
+        eval_obj_2: EvaluationObject,
+        fields: List[str] = ["text", "title"],
+        index_1: str = None,
+        index_2: str = None,
+        name_1: str = "approach_1",
+        name_2: str = "approach_2",
+        size: int = 20,
+        k: int = 20,
     ):
         self.qrys_rels = qry_rel_dict
         if eval_obj_1 is None:
@@ -48,11 +51,11 @@ class ComparisonTool(ComparisonToolBase):
             "#ffcc00",
             "#ffffff",
         ]
-        self.recall_diffs = {}
-        self.precision_diffs = {}
-        self.fscore_diffs = {}
+        # self.recall_diffs = {}
+        # self.precision_diffs = {}
+        # self.fscore_diffs = {}
 
-    def _get_conditions(self, queries, eval_objs, conditions):
+    def _get_conditions(self, queries: List[int], eval_objs: List[EvaluationObject], conditions: List) -> pd.DataFrame:
         """
         Gets condition values for the visualization as a pandas data frame.
 
@@ -70,7 +73,7 @@ class ComparisonTool(ComparisonToolBase):
         pandas data frame
 
         """
-        vis_dict = defaultdict(list)
+        vis_dict: DefaultDict[str, List] = defaultdict(list)
         for obj in eval_objs:
             for con in conditions:
                 for query in queries:
@@ -81,7 +84,8 @@ class ComparisonTool(ComparisonToolBase):
                     vis_dict["Scores"].append(con)
         return pd.DataFrame(data=vis_dict)
 
-    def _get_distributions(self, queries, eval_objs, distributions):
+    def _get_distributions(self, queries: List[int], eval_objs: List[EvaluationObject],
+                           distributions: List) -> pd.DataFrame:
         """
         Gets distribution values for the visualization as a pandas data frame.
 
@@ -99,7 +103,7 @@ class ComparisonTool(ComparisonToolBase):
         pandas data frame
 
         """
-        dis_dict = defaultdict(list)
+        dis_dict: DefaultDict[str, List] = defaultdict(list)
         for obj in eval_objs:
             for dist in distributions:
                 for query in queries:
@@ -108,7 +112,8 @@ class ComparisonTool(ComparisonToolBase):
                         dis_dict["Distributions"].append(dist)
         return pd.DataFrame(data=dis_dict)
 
-    def _get_explain_terms(self, query_id, doc_id, fields, eval_objs):
+    def _get_explain_terms(self, query_id: int, doc_id: int, fields: List[str],
+                           eval_objs: List[EvaluationObject]) -> pd.DataFrame:
         """
         Returns pandas data frame containing all the found terms and their scores.
 
@@ -128,7 +133,7 @@ class ComparisonTool(ComparisonToolBase):
         pandas data frame
 
         """
-        explain_dict = defaultdict(list)
+        explain_dict: DefaultDict[str, List] = defaultdict(list)
         for obj in eval_objs:
             # explain_dict[obj.name] = defaultdict(list)
             explain = obj.explain_query(query_id, doc_id, fields, dumps=False)
@@ -157,7 +162,8 @@ class ComparisonTool(ComparisonToolBase):
         #           explain_dict[eval_objs[0].name]['Group'] = group_counter
         return pd.DataFrame(data=explain_dict).sort_values(by=["Terms"])
 
-    def _get_csv_terms(self, query_id, doc_id, fields, decimal_separator, eval_objs):
+    def _get_csv_terms(self, query_id: int, doc_id: int, fields: List[str], decimal_separator: str,
+                       eval_objs: List[EvaluationObject]) -> Dict:
         """
         Returns dict containing all the found terms and their scores.
 
@@ -178,7 +184,7 @@ class ComparisonTool(ComparisonToolBase):
         -------
 
         """
-        term_dict = defaultdict(dict)
+        term_dict: DefaultDict[str, Dict] = defaultdict(dict)
         for obj in eval_objs:
             explain = obj.explain_query(query_id, doc_id, fields, dumps=False)
             for field in fields:
@@ -196,7 +202,7 @@ class ComparisonTool(ComparisonToolBase):
         extra_2 = set(term_dict[eval_objs[1].name]) - set(term_dict[eval_objs[0].name])
         for key in extra_2:
             term_dict[eval_objs[0].name][key] = 0
-        explain_dict = defaultdict()
+        explain_dict: DefaultDict[str, List] = defaultdict()
         for obj in eval_objs:
             ordered_terms = collections.OrderedDict(sorted(term_dict[obj.name].items()))
             searched_terms = list(ordered_terms.keys())
@@ -207,7 +213,7 @@ class ComparisonTool(ComparisonToolBase):
             explain_dict[obj.name + "2"].extend(term_scores)
         return explain_dict
 
-    def _extract_terms(self, string):
+    def _extract_terms(self, string: str) -> str:
         """
         Extracts terms from explain_query method.
 
@@ -218,16 +224,16 @@ class ComparisonTool(ComparisonToolBase):
 
         :Returns:
         -------
-        :terms: list of str
+        :terms: csv list of str
             extracted terms
 
         """
         term_regx = re.compile(r":[a-zA-ZäöüÄÖÜß]*\s")
         terms = re.findall(term_regx, string)
-        terms = ", ".join([term.replace(":", "").strip() for term in terms])
-        return terms
+        joined_terms = ", ".join([term.replace(":", "").strip() for term in terms])
+        return joined_terms
 
-    def calculate_difference(self, condition="fscore", dumps=False):
+    def calculate_difference(self, condition: str = "fscore", dumps: bool = False) -> str:
         """
         Calculates the difference per query for the given condition.
 
@@ -243,7 +249,7 @@ class ComparisonTool(ComparisonToolBase):
         json with value differences
 
         """
-        diff = defaultdict(dict)
+        diff: DefaultDict[str, Dict] = defaultdict(dict)
         diff_name = condition + "_diffs"
         # get all condition values from the first approach
         for query, data in getattr(self.eval_obj_1, condition).items():
@@ -273,8 +279,9 @@ class ComparisonTool(ComparisonToolBase):
             return json.dumps(diff_ordered, indent=4)
         else:
             setattr(self, diff_name, diff_ordered)
+            return ""
 
-    def get_disjoint_sets(self, distribution, highest=False):
+    def get_disjoint_sets(self, distribution: str, highest: bool = False) -> Union[OrderedDict, Tuple]:
         """
         Returns the disjoint sets of the given distribution.
 
@@ -292,7 +299,7 @@ class ComparisonTool(ComparisonToolBase):
             disjoint lists for each approach in a dictionary for each query regarding the distribution
 
         """
-        results = defaultdict(dict)
+        results: DefaultDict[str, Dict] = defaultdict(dict)
         # get query names
         for query, data in getattr(self.eval_obj_1, distribution).items():
             results[query]["question"] = data["question"]
@@ -337,7 +344,7 @@ class ComparisonTool(ComparisonToolBase):
             elements = list(ordered_results.items())
             return elements[-1]
 
-    def get_specific_comparison(self, query_id, doc_id, fields=["text", "title"]):
+    def get_specific_comparison(self, query_id: int, doc_id: int, fields: List[str] = ["text", "title"]) -> str:
         """
         Function to get position, highlights and scores for a specific query and a specific query in comparison.
 
@@ -353,7 +360,7 @@ class ComparisonTool(ComparisonToolBase):
         :json.dumps(comp_dict): dict dumped as json
             filled with comparison for given query and doc id
         """
-        comp_dict = defaultdict()
+        comp_dict: DefaultDict[str, Dict] = defaultdict()
         attr_list = ["true_positives", "false_positives", "false_negatives"]
         eval_objs = [self.eval_obj_1, self.eval_obj_2]
         comp_dict["Query " + str(query_id)] = self.qrys_rels[query_id]
@@ -389,16 +396,16 @@ class ComparisonTool(ComparisonToolBase):
                     + str(doc_id)
                     + ". This might be because of a too small size. Keep in mind that the size is 20 by default."
                 )
-        return print(json.dumps(comp_dict, indent=4))
+        return json.dumps(comp_dict, indent=4)
 
     def visualize_distributions(
         self,
-        queries=None,
-        eval_objs=None,
-        distributions=["true_positives", "false_positives", "false_negatives"],
-        download=False,
-        path_to_file="./save_vis_distributions.svg",
-    ):
+        queries: List[int] = [],
+        eval_objs: List[EvaluationObject] = [],
+        distributions: List[str] = ["true_positives", "false_positives", "false_negatives"],
+        download: bool = False,
+        path_to_file: str = "./save_vis_distributions.svg",
+    ) -> None:
         """
         Visualizes distributions in comparison for given queries and given approaches.
 
@@ -448,12 +455,12 @@ class ComparisonTool(ComparisonToolBase):
 
     def visualize_condition(
         self,
-        queries=None,
-        eval_objs=None,
-        conditions=["precision", "recall", "fscore"],
-        download=False,
-        path_to_file="./save_vis_condition.svg",
-    ):
+        queries: List[int] = [],
+        eval_objs: List[EvaluationObject] = [],
+        conditions: List[str] = ["precision", "recall", "fscore"],
+        download: bool = False,
+        path_to_file: str = "./save_vis_condition.svg",
+    ) -> None:
         """
         Visualizes conditions in comparison for given queries and given approaches.
 
@@ -503,13 +510,13 @@ class ComparisonTool(ComparisonToolBase):
 
     def visualize_explanation(
         self,
-        query_id,
-        doc_id,
-        fields=["text", "title"],
-        eval_objs=None,
-        download=False,
-        path_to_file="./save_vis_explaination.svg",
-    ):
+        query_id: int,
+        doc_id: int,
+        fields: List[str] = ["text", "title"],
+        eval_objs: List[EvaluationObject] = [],
+        download: bool = False,
+        path_to_file: str = "./save_vis_explaination.svg",
+    ) -> None:
         """
         Visualize in comparison which words were better scored using approach, specific query and a specific document.
 
@@ -549,13 +556,13 @@ class ComparisonTool(ComparisonToolBase):
 
     def visualize_explanation_csv(
         self,
-        query_id,
-        doc_id,
-        path_to_save_to,
-        fields=["text", "title"],
-        decimal_separator=",",
-        eval_objs=None,
-    ):
+        query_id: int,
+        doc_id: int,
+        path_to_save_to: str,
+        fields: List[str] = ["text", "title"],
+        decimal_separator: str = ",",
+        eval_objs: List[EvaluationObject] = [],
+    ) -> None:
         """
         Saves explanation table to csv
 

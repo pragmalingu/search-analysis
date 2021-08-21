@@ -63,6 +63,9 @@ class ComparisonToolBase(ABC):
 
 
 class EvaluationObject(ABC):
+    def __init__(self):
+        self.name = None
+
     @abstractmethod
     def get_true_positives(
         self,
@@ -137,3 +140,6 @@ class EvaluationObject(ABC):
     @abstractmethod
     def explain_query(self, query_id, doc_id, fields=["text", "title"], dumps=True):
         pass
+
+    def get_name(self):
+        return self.name
