@@ -1,12 +1,12 @@
 {
-  "_template": "gh:cjolowicz/cookiecutter-hypermodern-python",
-  "author": "PragmaLingu",
-  "development_status": "Development Status :: 3 - Alpha",
-  "email": "info@pragmalingu.de",
-  "friendly_name": "Search_Analysis",
-  "github_user": "pragmalingu",
-  "license": "MIT",
-  "package_name": "search_analysis",
-  "project_name": "search_analysis",
-  "version": "0.1.23"
+    "_template": "gh:cjolowicz/cookiecutter-hypermodern-python",
+    "author": "PragmaLingu",
+    "development_status": "Development Status :: 3 - Alpha",
+    "email": "info@pragmalingu.de",
+    "friendly_name": "Search_Analysis",
+    "github_user": "pragmalingu",
+    "license": "MIT",
+    "package_name": "search_analysis",
+    "project_name": "search_analysis",
+    "version": "0.1.23"
 }

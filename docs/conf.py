@@ -1,8 +1,9 @@
 """Sphinx configuration."""
-from datetime import datetime
-import sys
 import os
-sys.path.insert(0, os.path.abspath('../src'))
+import sys
+from datetime import datetime
+
+sys.path.insert(0, os.path.abspath("../src"))
 
 project = "Search_Analysis"
 author = "PragmaLingu"
