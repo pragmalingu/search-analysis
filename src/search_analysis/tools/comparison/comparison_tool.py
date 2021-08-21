@@ -1,6 +1,7 @@
 import collections
 import csv
 import json
+import logging
 import re
 from collections import defaultdict
 from collections import OrderedDict
@@ -221,7 +222,7 @@ class ComparisonTool(ComparisonToolBase):
             extracted terms
 
         """
-        term_regx = re.compile(":[a-zA-ZäöüÄÖÜß]*\s")
+        term_regx = re.compile(r":[a-zA-ZäöüÄÖÜß]*\s")
         terms = re.findall(term_regx, string)
         terms = ", ".join([term.replace(":", "").strip() for term in terms])
         return terms
@@ -539,7 +540,7 @@ class ComparisonTool(ComparisonToolBase):
         custom_palette = sns.set_palette(sns.color_palette(self.pragma_colors))
         sns.set_context("paper", rc={"figure.figsize": (20, 14)})
         sns.set_theme(context="paper", style="whitegrid", palette=custom_palette)
-        g = sns.barplot(x="Term Score", y="Terms", data=panda_explain, hue="Approach")
+        sns.barplot(x="Term Score", y="Terms", data=panda_explain, hue="Approach")
         sns.despine(left=True, bottom=True)
         if download:
             plt.gcf().subplots_adjust(bottom=0.08)

@@ -283,7 +283,7 @@ class ESEvaluationObject(EvaluationObject):
 
         """
         if recall or precision != 0:
-            if factor is 1:
+            if factor == 1:
                 return (2 * precision * recall) / (precision + recall)
             else:
                 return (1 + factor ** 2) * (
