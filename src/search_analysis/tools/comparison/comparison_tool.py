@@ -14,7 +14,7 @@ import seaborn as sns
 from search_analysis.tools import ComparisonToolBase
 from search_analysis.tools.elasticsearch.es_evaluation_object import ESEvaluationObject
 
-from src.search_analysis import EvaluationObject
+from search_analysis.tools.base import EvaluationObject
 
 
 class ComparisonTool(ComparisonToolBase):
