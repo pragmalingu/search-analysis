@@ -140,3 +140,6 @@ dmypy.json
 /dist/
 /docs/_build/
 /src/*.egg-info/
+
+
+search_analysis/docs/_build/
