@@ -1,1 +1,2 @@
 from .es_evaluation_object import ESEvaluationObject
+from .evaluation_object_mock import EvaluationObjectMock
